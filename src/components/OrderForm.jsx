@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { addOrder } from "../api/orders";
 
 
-const ORDER_TYPES = ["Individuals", "Shops", "Supermarkets", "Pre-Urban"];
+const ORDER_TYPES = ["Individuals", "Shops", "Supermarkets", "Pre-Urban","SOFHA Health Centers"];
 
 export default function OrderForm({ onOrderAdded }) {
   const [formData, setFormData] = useState({
