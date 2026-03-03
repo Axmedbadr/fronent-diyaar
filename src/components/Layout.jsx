@@ -6,7 +6,7 @@ export default function Layout({ children }) {
     <div className="layout">
       <header className="header">
         <div className="container">
-          <h1>📊 Dr. Asma Analysis Tool</h1>
+          <h1>📊 Diyaar  Analysis Tool</h1>
           <p className="subtitle">Manage and analyze your customer orders</p>
         </div>
       </header>
@@ -19,7 +19,7 @@ export default function Layout({ children }) {
       
       <footer className="footer">
         <div className="container">
-          <p>&copy; 2026 Dr. Asma Analysis Tool. All rights reserved.</p>
+          <p>&copy; 2026 Diyaar Analysis Tool. All rights reserved.</p>
         </div>
       </footer>
     </div>
