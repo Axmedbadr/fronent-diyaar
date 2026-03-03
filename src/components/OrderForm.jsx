@@ -9,6 +9,7 @@ export default function OrderForm({ onOrderAdded }) {
     customerName: "",
     phoneNumber: "",
     type: "Individuals",
+    orderDate: new Date().toISOString().split('T')[0] // Today's date in YYYY-MM-DD format
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -25,13 +26,19 @@ export default function OrderForm({ onOrderAdded }) {
       setError("Customer name is required");
       return;
     }
+    
+    if (!formData.orderDate) {
+      setError("Order date is required");
+      return;
+    }
 
     setLoading(true);
     try {
       const newOrder = {
-        ...formData,
-        orderDate: new Date().toISOString(),
+        customerName: formData.customerName,
         phoneNumber: formData.phoneNumber.trim() || null,
+        type: formData.type,
+        orderDate: new Date(formData.orderDate).toISOString(), // Convert to ISO string for API
       };
       
       await addOrder(newOrder);
@@ -39,6 +46,7 @@ export default function OrderForm({ onOrderAdded }) {
         customerName: "",
         phoneNumber: "",
         type: "Individuals",
+        orderDate: new Date().toISOString().split('T')[0], // Reset to today's date
       });
       if (onOrderAdded) onOrderAdded();
     } catch (err) {
@@ -53,6 +61,19 @@ export default function OrderForm({ onOrderAdded }) {
     <div className="order-form-container">
       <h2>Add New Order</h2>
       <form onSubmit={handleSubmit} className="order-form">
+        <div className="form-group">
+          <label htmlFor="orderDate">Order Date *</label>
+          <input
+            type="date"
+            id="orderDate"
+            name="orderDate"
+            value={formData.orderDate}
+            onChange={handleChange}
+            disabled={loading}
+            required
+          />
+        </div>
+
         <div className="form-group">
           <label htmlFor="customerName">Customer Name *</label>
           <input
