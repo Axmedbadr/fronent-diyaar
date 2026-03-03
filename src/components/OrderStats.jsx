@@ -2,6 +2,15 @@ import React, { useState, useEffect } from "react";
 import { getStats } from "../api/orders";
 
 
+// Display names mapping for order types
+const TYPE_DISPLAY_NAMES = {
+  "Individuals": "Individuals",
+  "Shops": "Shops",
+  "Supermarkets": "Supermarkets",
+  "Pre-Urban": "Pre-Urban",
+  "SOFHA Health Centers": "SOFHA Health Centers"
+};
+
 export default function OrderStats() {
   const [stats, setStats] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -34,7 +43,9 @@ export default function OrderStats() {
       <div className="stats-grid">
         {stats.map(stat => (
           <div key={stat._id} className="stat-card">
-            <div className="stat-label">{stat._id}</div>
+            <div className="stat-label">
+              {TYPE_DISPLAY_NAMES[stat._id] || stat._id}
+            </div>
             <div className="stat-value">{stat.count}</div>
             <div className="stat-percentage">
               {((stat.count / total) * 100).toFixed(1)}%
@@ -42,7 +53,7 @@ export default function OrderStats() {
           </div>
         ))}
         <div className="stat-card total">
-          <div className="stat-label">Total</div>
+          <div className="stat-label">Total Orders</div>
           <div className="stat-value">{total}</div>
           <div className="stat-percentage">100%</div>
         </div>
