@@ -5,14 +5,14 @@ const ORDER_TYPES = ["Individuals", "Shops", "Supermarkets", "Pre-Urban", "SOFHA
 
 // Item list (products per kg)
 const ITEMS = [
-  { id: 1, name: "Mashaali 1kg" },
-  { id: 2, name: "M.plus 1kg" },
-  { id: 3, name: "Budo 1kg" },
-  { id: 4, name: "Shuuro 1kg" },
-  { id: 5, name: "Talbina 1kg" },
-  { id: 6, name: "Budo special order 1kg" },
-  { id: 7, name: "Shuuro special order 1kg" },
-  { id: 8, name: "Mashaali cake mix powder 1kg" }
+  { id: 1, name: "Mashaali kg" },
+  { id: 2, name: "M.plus kg" },
+  { id: 3, name: "Budo kg" },
+  { id: 4, name: "Shuuro kg" },
+  { id: 5, name: "Talbina kg" },
+  { id: 6, name: "Budo special order kg" },
+  { id: 7, name: "Shuuro special order kg" },
+  { id: 8, name: "Mashaali cake mix powder kg" }
 ];
 
 export default function OrderForm({ onOrderAdded }) {
