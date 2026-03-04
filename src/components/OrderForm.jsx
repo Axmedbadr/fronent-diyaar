@@ -1,16 +1,34 @@
 import React, { useState } from "react";
 import { addOrder } from "../api/orders";
 
+const ORDER_TYPES = ["Individuals", "Shops", "Supermarkets", "Pre-Urban", "SOFHA Health Centers"];
 
-const ORDER_TYPES = ["Individuals", "Shops", "Supermarkets", "Pre-Urban","SOFHA Health Centers"];
+// Item list (products per kg)
+const ITEMS = [
+  { id: 1, name: "Mashaali 1kg" },
+  { id: 2, name: "M.plus 1kg" },
+  { id: 3, name: "Budo 1kg" },
+  { id: 4, name: "Shuuro 1kg" },
+  { id: 5, name: "Talbina 1kg" },
+  { id: 6, name: "Budo special order 1kg" },
+  { id: 7, name: "Shuuro special order 1kg" },
+  { id: 8, name: "Mashaali cake mix powder 1kg" }
+];
 
 export default function OrderForm({ onOrderAdded }) {
   const [formData, setFormData] = useState({
     customerName: "",
     phoneNumber: "",
     type: "Individuals",
-    orderDate: new Date().toISOString().split('T')[0] // Today's date in YYYY-MM-DD format
+    orderDate: new Date().toISOString().split('T')[0]
   });
+  
+  const [items, setItems] = useState([]);
+  const [currentItem, setCurrentItem] = useState({
+    itemName: "",
+    quantity: 1
+  });
+  
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -20,8 +38,47 @@ export default function OrderForm({ onOrderAdded }) {
     setError("");
   };
 
+  const handleItemChange = (e) => {
+    const { name, value } = e.target;
+    setCurrentItem(prev => ({ ...prev, [name]: value }));
+  };
+
+  const addItem = () => {
+    if (!currentItem.itemName) {
+      setError("Please select an item");
+      return;
+    }
+    if (currentItem.quantity <= 0) {
+      setError("Quantity must be greater than 0");
+      return;
+    }
+
+    setItems([
+      ...items,
+      {
+        itemName: currentItem.itemName,
+        quantity: parseInt(currentItem.quantity)
+      }
+    ]);
+
+    // Reset current item
+    setCurrentItem({
+      itemName: "",
+      quantity: 1
+    });
+    setError("");
+  };
+
+  const removeItem = (index) => {
+    setItems(items.filter((_, i) => i !== index));
+  };
+
+  // Calculate total kg (optional - just for display)
+  const totalKg = items.reduce((sum, item) => sum + item.quantity, 0);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
     if (!formData.customerName.trim()) {
       setError("Customer name is required");
       return;
@@ -32,22 +89,33 @@ export default function OrderForm({ onOrderAdded }) {
       return;
     }
 
+    if (items.length === 0) {
+      setError("Please add at least one item to the order");
+      return;
+    }
+
     setLoading(true);
     try {
       const newOrder = {
         customerName: formData.customerName,
         phoneNumber: formData.phoneNumber.trim() || null,
         type: formData.type,
-        orderDate: new Date(formData.orderDate).toISOString(), // Convert to ISO string for API
+        orderDate: new Date(formData.orderDate).toISOString(),
+        items: items
+        // No totalAmount field
       };
       
       await addOrder(newOrder);
+      
+      // Reset form
       setFormData({
         customerName: "",
         phoneNumber: "",
         type: "Individuals",
-        orderDate: new Date().toISOString().split('T')[0], // Reset to today's date
+        orderDate: new Date().toISOString().split('T')[0]
       });
+      setItems([]);
+      
       if (onOrderAdded) onOrderAdded();
     } catch (err) {
       setError("Failed to add order. Please try again.");
@@ -59,8 +127,9 @@ export default function OrderForm({ onOrderAdded }) {
 
   return (
     <div className="order-form-container">
-      <h2>Add New Order</h2>
+      <h2>📦 Add New Order</h2>
       <form onSubmit={handleSubmit} className="order-form">
+        {/* Order Date */}
         <div className="form-group">
           <label htmlFor="orderDate">Order Date *</label>
           <input
@@ -74,6 +143,7 @@ export default function OrderForm({ onOrderAdded }) {
           />
         </div>
 
+        {/* Customer Information */}
         <div className="form-group">
           <label htmlFor="customerName">Customer Name *</label>
           <input
@@ -84,7 +154,6 @@ export default function OrderForm({ onOrderAdded }) {
             onChange={handleChange}
             placeholder="Enter customer name"
             disabled={loading}
-            className={error ? "error" : ""}
           />
         </div>
 
@@ -116,14 +185,98 @@ export default function OrderForm({ onOrderAdded }) {
           </select>
         </div>
 
+        {/* Items Section */}
+        <div className="items-section">
+          <h3>🛒 Add Items (per kg)</h3>
+          
+          <div className="item-row">
+            <select
+              name="itemName"
+              value={currentItem.itemName}
+              onChange={handleItemChange}
+              className="item-select"
+              disabled={loading}
+            >
+              <option value="">Select an item...</option>
+              {ITEMS.map(item => (
+                <option key={item.id} value={item.name}>
+                  {item.name}
+                </option>
+              ))}
+            </select>
+
+            <input
+              type="number"
+              name="quantity"
+              value={currentItem.quantity}
+              onChange={handleItemChange}
+              placeholder="Quantity (kg)"
+              min="1"
+              className="item-quantity"
+              disabled={loading}
+            />
+
+            <button 
+              type="button" 
+              onClick={addItem}
+              className="add-item-btn"
+              disabled={loading}
+            >
+              ➕ Add Item
+            </button>
+          </div>
+
+          {/* Items List */}
+          {items.length > 0 && (
+            <div className="items-list">
+              <h4>Order Items:</h4>
+              <table className="items-table">
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>Quantity (kg)</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map((item, index) => (
+                    <tr key={index}>
+                      <td>{item.itemName}</td>
+                      <td>{item.quantity} kg</td>
+                      <td>
+                        <button
+                          type="button"
+                          onClick={() => removeItem(index)}
+                          className="remove-item-btn"
+                          disabled={loading}
+                          title="Remove item"
+                        >
+                          ✕
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td><strong>Total:</strong></td>
+                    <td><strong>{totalKg} kg</strong></td>
+                    <td></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          )}
+        </div>
+
         {error && <div className="error-message">{error}</div>}
 
         <button 
           type="submit" 
-          disabled={loading}
+          disabled={loading || items.length === 0}
           className="submit-btn"
         >
-          {loading ? "Adding..." : "Add Order"}
+          {loading ? "Creating Order..." : "Create Order"}
         </button>
       </form>
     </div>
