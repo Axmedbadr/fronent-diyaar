@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { getStats } from "../api/orders";
 
-
-// Display names mapping for order types
 const TYPE_DISPLAY_NAMES = {
   "Individuals": "Individuals",
   "Shops": "Shops",

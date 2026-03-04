@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { getStats, getOrders } from "../api/orders";
+import { getStats, getOrders, getPopularItems } from "../api/orders";
 
 function Analytics() {
   const [stats, setStats] = useState([]);
   const [recentOrders, setRecentOrders] = useState([]);
+  const [popularItems, setPopularItems] = useState([]);
   const [phoneCount, setPhoneCount] = useState(0);
   const [totalOrders, setTotalOrders] = useState(0);
+  const [totalKg, setTotalKg] = useState(0);
   const [customerStats, setCustomerStats] = useState({
     newCustomers: 0,
     loyalCustomers: 0,
@@ -15,6 +17,7 @@ function Analytics() {
   const [searchPhone, setSearchPhone] = useState("");
   const [searchResult, setSearchResult] = useState(null);
   const [showLoyalList, setShowLoyalList] = useState(false);
+  const [showItemsList, setShowItemsList] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -23,9 +26,10 @@ function Analytics() {
 
   const fetchAnalytics = async () => {
     try {
-      const [statsData, ordersData] = await Promise.all([
+      const [statsData, ordersData, popularItemsData] = await Promise.all([
         getStats(),
-        getOrders()
+        getOrders(),
+        getPopularItems()
       ]);
       
       // Sort orders by date (newest first) and take top 5 for recent orders
@@ -35,6 +39,7 @@ function Analytics() {
       
       setStats(statsData);
       setRecentOrders(sortedOrders.slice(0, 5));
+      setPopularItems(popularItemsData);
       
       // Count phone numbers in ALL orders
       const ordersWithPhone = ordersData.filter(o => o.phoneNumber).length;
@@ -44,7 +49,16 @@ function Analytics() {
       const total = statsData.reduce((acc, curr) => acc + curr.count, 0);
       setTotalOrders(total);
 
-      // Analyze new vs loyal customers based on phone numbers
+      // Calculate total kg across all orders
+      const totalKgAll = ordersData.reduce((sum, order) => {
+        if (order.items && order.items.length > 0) {
+          return sum + order.items.reduce((itemSum, item) => itemSum + (item.quantity || 0), 0);
+        }
+        return sum;
+      }, 0);
+      setTotalKg(totalKgAll);
+
+      // Analyze customer types
       const { newCustomers, loyalCustomers, uniqueCustomers, loyalList } = analyzeCustomerTypes(ordersData);
       
       setCustomerStats({
@@ -81,7 +95,8 @@ function Analytics() {
             orders: [],
             firstOrder: order.orderDate,
             lastOrder: order.orderDate,
-            orderCount: 0
+            orderCount: 0,
+            totalKg: 0
           });
         }
         
@@ -89,6 +104,12 @@ function Analytics() {
         customer.orders.push(order);
         customer.orderCount++;
         customer.lastOrder = order.orderDate;
+        
+        // Calculate total kg for this customer
+        if (order.items && order.items.length > 0) {
+          const orderKg = order.items.reduce((sum, item) => sum + (item.quantity || 0), 0);
+          customer.totalKg += orderKg;
+        }
       }
     });
 
@@ -122,9 +143,9 @@ function Analytics() {
 
     return {
       newCustomers,
-      loyalCustomers: loyalInRecent, // Loyal customers in recent orders
+      loyalCustomers: loyalInRecent,
       uniqueCustomers,
-      loyalList // Full list of loyal customers (for display)
+      loyalList
     };
   };
 
@@ -155,10 +176,13 @@ function Analytics() {
     return <div className="loading">Loading analytics...</div>;
   }
 
-  // Calculate loyalty rate (ensuring it's between 0-100%)
+  // Calculate loyalty rate
   const loyaltyRate = customerStats.uniqueCustomers > 0
     ? Math.min(100, (loyalCustomersList.length / customerStats.uniqueCustomers) * 100).toFixed(1)
     : 0;
+
+  // Get top 3 items for the card
+  const topItems = popularItems.slice(0, 3);
 
   return (
     <div className="analytics">
@@ -178,40 +202,78 @@ function Analytics() {
           <p className="big-number">{phoneCount}</p>
           <small>{((phoneCount/totalOrders) * 100).toFixed(1)}% of orders</small>
         </div>
+        <div className="summary-card">
+          <h3>Total KG</h3>
+          <p className="big-number">{totalKg} kg</p>
+          <small>Across all orders</small>
+        </div>
       </div>
 
-      {/* Customer Statistics Cards */}
-      <div className="customer-stats">
-        <h3>👥 Customer Analysis</h3>
-        <div className="customer-cards">
-          <div className="customer-card new">
-            <div className="customer-icon">🆕</div>
-            <div className="customer-info">
-              <h4>New Customers</h4>
-              <p className="big-number">{customerStats.newCustomers}</p>
-              <small>In recent orders</small>
+      {/* Customer & Items Statistics Cards */}
+      <div className="analytics-cards">
+        {/* Customer Analysis Cards */}
+        <div className="customer-stats">
+          <h3>👥 Customer Analysis</h3>
+          <div className="customer-cards">
+            <div className="customer-card new">
+              <div className="customer-icon">🆕</div>
+              <div className="customer-info">
+                <h4>New Customers</h4>
+                <p className="big-number">{customerStats.newCustomers}</p>
+                <small>In recent orders</small>
+              </div>
+            </div>
+
+            <div 
+              className="customer-card loyal clickable"
+              onClick={() => setShowLoyalList(!showLoyalList)}
+            >
+              <div className="customer-icon">⭐</div>
+              <div className="customer-info">
+                <h4>Loyal Customers</h4>
+                <p className="big-number">{loyalCustomersList.length}</p>
+                <small>Click to {showLoyalList ? 'hide' : 'view'} list</small>
+              </div>
+            </div>
+
+            <div className="customer-card retention">
+              <div className="customer-icon">📊</div>
+              <div className="customer-info">
+                <h4>Loyalty Rate</h4>
+                <p className="big-number">{loyaltyRate}%</p>
+                <small>{loyalCustomersList.length} of {customerStats.uniqueCustomers}</small>
+              </div>
             </div>
           </div>
+        </div>
 
+        {/* Items Analysis Card */}
+        <div className="items-stats">
+          <h3>📦 Popular Items</h3>
           <div 
-            className="customer-card loyal clickable"
-            onClick={() => setShowLoyalList(!showLoyalList)}
+            className="items-card clickable"
+            onClick={() => setShowItemsList(!showItemsList)}
           >
-            <div className="customer-icon">⭐</div>
-            <div className="customer-info">
-              <h4>Loyal Customers</h4>
-              <p className="big-number">{loyalCustomersList.length}</p>
-              <small>Click to {showLoyalList ? 'hide' : 'view'} list</small>
+            <div className="items-header">
+              <span className="items-icon">🏆</span>
+              <span className="items-title">Top Items</span>
+              <span className="items-toggle">{showItemsList ? '▼' : '▶'}</span>
             </div>
-          </div>
-
-          <div className="customer-card retention">
-            <div className="customer-icon">📊</div>
-            <div className="customer-info">
-              <h4>Loyalty Rate</h4>
-              <p className="big-number">{loyaltyRate}%</p>
-              <small>Of all customers ({loyalCustomersList.length} of {customerStats.uniqueCustomers})</small>
+            
+            {/* Top 3 Items Preview */}
+            <div className="top-items-preview">
+              {topItems.map((item, index) => (
+                <div key={index} className="preview-item">
+                  <span className="preview-rank">#{index + 1}</span>
+                  <span className="preview-name">{item._id}</span>
+                  <span className="preview-quantity">{item.totalQuantity} kg</span>
+                </div>
+              ))}
             </div>
+            
+            {popularItems.length === 0 && (
+              <div className="no-items">No items data available</div>
+            )}
           </div>
         </div>
       </div>
@@ -245,6 +307,7 @@ function Analytics() {
                   <p><strong>Name:</strong> {searchResult.customerName}</p>
                   <p><strong>Phone:</strong> {searchResult.phone}</p>
                   <p><strong>Total Orders:</strong> {searchResult.orderCount}</p>
+                  <p><strong>Total KG:</strong> {searchResult.totalKg} kg</p>
                   <p><strong>First Order:</strong> {new Date(searchResult.firstOrder).toLocaleDateString()}</p>
                   <p><strong>Last Order:</strong> {new Date(searchResult.lastOrder).toLocaleDateString()}</p>
                 </div>
@@ -259,7 +322,8 @@ function Analytics() {
                 <tr>
                   <th>Customer Name</th>
                   <th>Phone Number</th>
-                  <th>Total Orders</th>
+                  <th>Orders</th>
+                  <th>Total KG</th>
                   <th>First Order</th>
                   <th>Last Order</th>
                 </tr>
@@ -270,8 +334,42 @@ function Analytics() {
                     <td><strong>{customer.customerName}</strong></td>
                     <td>📞 {customer.phone}</td>
                     <td className="order-count">{customer.orderCount}</td>
+                    <td>{customer.totalKg} kg</td>
                     <td>{new Date(customer.firstOrder).toLocaleDateString()}</td>
                     <td>{new Date(customer.lastOrder).toLocaleDateString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Items List (Collapsible) */}
+      {showItemsList && (
+        <div className="items-section">
+          <h4>📦 All Items ({popularItems.length})</h4>
+          <div className="table-responsive">
+            <table className="items-table-detailed">
+              <thead>
+                <tr>
+                  <th>Rank</th>
+                  <th>Item Name</th>
+                  <th>Total Quantity (kg)</th>
+                  <th>Number of Orders</th>
+                  <th>Avg per Order</th>
+                  <th>% of Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {popularItems.map((item, index) => (
+                  <tr key={index}>
+                    <td className="rank">#{index + 1}</td>
+                    <td><strong>{item._id}</strong></td>
+                    <td className="quantity">{item.totalQuantity} kg</td>
+                    <td>{item.numberOfOrders}</td>
+                    <td>{(item.totalQuantity / item.numberOfOrders).toFixed(1)} kg</td>
+                    <td>{((item.totalQuantity / totalKg) * 100).toFixed(1)}%</td>
                   </tr>
                 ))}
               </tbody>
@@ -303,26 +401,22 @@ function Analytics() {
         </div>
 
         <div className="recent-card">
-          <h3>Recent Orders with Customer Status</h3>
+          <h3>Recent Orders</h3>
           <ul className="recent-list">
             {recentOrders.map(order => {
-              // Determine if this is a new or loyal customer
-              const isLoyal = loyalCustomersList.some(c => 
-                c.phone === order.phoneNumber
-              );
+              const isLoyal = loyalCustomersList.some(c => c.phone === order.phoneNumber);
+              const orderKg = order.items?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0;
               
               return (
                 <li key={order._id} className={isLoyal ? 'loyal-customer' : 'new-customer'}>
                   <span className="recent-name">{order.customerName}</span>
+                  <span className="recent-kg">{orderKg} kg</span>
                   <span className="customer-badge">
                     {order.phoneNumber ? (
-                      isLoyal ? '⭐ Loyal' : '🆕 New'
+                      isLoyal ? '⭐' : '🆕'
                     ) : (
-                      '📱 No Phone'
+                      '📱'
                     )}
-                  </span>
-                  <span className={`recent-type ${order.type.toLowerCase()}`}>
-                    {order.type}
                   </span>
                 </li>
               );

@@ -8,7 +8,7 @@ export default function OrdersList({ refresh }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [expandedOrder, setExpandedOrder] = useState(null); // For expandable rows
+  const [expandedOrder, setExpandedOrder] = useState(null);
   const [filters, setFilters] = useState({
     type: "",
     startDate: "",
@@ -19,7 +19,6 @@ export default function OrdersList({ refresh }) {
     setLoading(true);
     try {
       const data = await getOrders(filters);
-      // Sort orders by date in descending order (latest first)
       const sortedData = [...data].sort((a, b) => 
         new Date(b.orderDate) - new Date(a.orderDate)
       );
@@ -38,7 +37,6 @@ export default function OrdersList({ refresh }) {
     fetchOrders();
   }, [refresh, filters]);
 
-  // Handle search filtering
   useEffect(() => {
     if (searchTerm.trim() === "") {
       setFilteredOrders(orders);
@@ -47,7 +45,6 @@ export default function OrdersList({ refresh }) {
         order.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (order.phoneNumber && order.phoneNumber.includes(searchTerm)) ||
         order.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        // Search in items
         (order.items && order.items.some(item => 
           item.itemName.toLowerCase().includes(searchTerm.toLowerCase())
         ))
@@ -86,49 +83,31 @@ export default function OrdersList({ refresh }) {
     setExpandedOrder(expandedOrder === orderId ? null : orderId);
   };
 
-  // Calculate total kg for an order
   const calculateTotalKg = (items) => {
     if (!items || !items.length) return 0;
     return items.reduce((sum, item) => sum + (item.quantity || 0), 0);
   };
 
-  // Export to Excel using exceljs
   const exportToExcel = async () => {
     try {
       const workbook = new ExcelJS.Workbook();
       workbook.creator = 'Dr. Asma Analysis Tool';
-      workbook.lastModifiedBy = 'Dr. Asma Analysis Tool';
-      workbook.created = new Date();
-      workbook.modified = new Date();
       
-      // Create main orders sheet
-      const worksheet = workbook.addWorksheet('Orders', {
-        properties: { tabColor: { argb: 'FF2C3E50' } },
-        views: [{ state: 'frozen', xSplit: 0, ySplit: 1 }]
-      });
+      const worksheet = workbook.addWorksheet('Orders');
       
-      // Add headers with styling
       const headers = ['Date', 'Customer Name', 'Phone', 'Type', 'Items', 'Total KG'];
       const headerRow = worksheet.addRow(headers);
       
-      // Style the header row
       headerRow.eachCell((cell) => {
-        cell.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12 };
+        cell.font = { bold: true };
         cell.fill = {
           type: 'pattern',
           pattern: 'solid',
           fgColor: { argb: 'FF2C3E50' }
         };
-        cell.alignment = { vertical: 'middle', horizontal: 'center' };
-        cell.border = {
-          top: { style: 'thin' },
-          left: { style: 'thin' },
-          bottom: { style: 'thin' },
-          right: { style: 'thin' }
-        };
+        cell.font = { color: { argb: 'FFFFFFFF' }, bold: true };
       });
       
-      // Set column widths
       worksheet.columns = [
         { width: 15 },
         { width: 25 },
@@ -138,16 +117,14 @@ export default function OrdersList({ refresh }) {
         { width: 10 }
       ];
       
-      // Add data rows
       filteredOrders.forEach((order, index) => {
-        // Format items list
         const itemsList = order.items && order.items.length > 0
           ? order.items.map(item => `${item.itemName}: ${item.quantity}kg`).join(', ')
           : 'No items';
         
         const totalKg = calculateTotalKg(order.items);
         
-        const row = worksheet.addRow([
+        worksheet.addRow([
           new Date(order.orderDate).toLocaleDateString(),
           order.customerName,
           order.phoneNumber || '-',
@@ -155,44 +132,8 @@ export default function OrdersList({ refresh }) {
           itemsList,
           totalKg
         ]);
-        
-        // Style data rows
-        row.eachCell((cell) => {
-          cell.alignment = { vertical: 'middle', horizontal: 'left' };
-          cell.border = {
-            top: { style: 'thin' },
-            left: { style: 'thin' },
-            bottom: { style: 'thin' },
-            right: { style: 'thin' }
-          };
-        });
-        
-        // Alternate row colors
-        if (index % 2 === 0) {
-          row.eachCell((cell) => {
-            cell.fill = {
-              type: 'pattern',
-              pattern: 'solid',
-              fgColor: { argb: 'FFF5F5F5' }
-            };
-          });
-        }
       });
       
-      // Add summary row
-      worksheet.addRow([]);
-      const totalKgAll = filteredOrders.reduce((sum, order) => sum + calculateTotalKg(order.items), 0);
-      const summaryRow = worksheet.addRow(['TOTAL:', '', '', '', `${filteredOrders.length} orders`, `${totalKgAll} kg`]);
-      summaryRow.eachCell((cell) => {
-        cell.font = { bold: true, size: 11 };
-        cell.fill = {
-          type: 'pattern',
-          pattern: 'solid',
-          fgColor: { argb: 'FFFFE699' }
-        };
-      });
-      
-      // Generate and download
       const buffer = await workbook.xlsx.writeBuffer();
       const blob = new Blob([buffer], { 
         type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
@@ -201,14 +142,11 @@ export default function OrdersList({ refresh }) {
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
       link.download = `orders_export_${new Date().toISOString().split('T')[0]}.xlsx`;
-      document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(link.href);
       
     } catch (error) {
       console.error('Error exporting to Excel:', error);
-      setError('Failed to export to Excel. Please try again.');
+      setError('Failed to export to Excel');
     }
   };
 
@@ -222,7 +160,6 @@ export default function OrdersList({ refresh }) {
         <h2>Orders ({filteredOrders.length})</h2>
         
         <div className="filters">
-          {/* Search Bar */}
           <div className="search-container">
             <input
               type="text"
@@ -235,7 +172,6 @@ export default function OrdersList({ refresh }) {
               <button 
                 onClick={() => setSearchTerm("")} 
                 className="clear-search-btn"
-                title="Clear search"
               >
                 ✕
               </button>
@@ -262,7 +198,6 @@ export default function OrdersList({ refresh }) {
             value={filters.startDate}
             onChange={handleFilterChange}
             className="filter-date"
-            placeholder="Start Date"
           />
 
           <input
@@ -271,7 +206,6 @@ export default function OrdersList({ refresh }) {
             value={filters.endDate}
             onChange={handleFilterChange}
             className="filter-date"
-            placeholder="End Date"
           />
 
           <button onClick={clearFilters} className="clear-filters-btn">
@@ -279,9 +213,8 @@ export default function OrdersList({ refresh }) {
           </button>
         </div>
 
-        {/* Export Button */}
         <div className="export-buttons">
-          <button onClick={exportToExcel} className="export-btn excel-btn" title="Export to Excel">
+          <button onClick={exportToExcel} className="export-btn excel-btn">
             📊 Export to Excel
           </button>
         </div>
@@ -298,7 +231,7 @@ export default function OrdersList({ refresh }) {
           <table className="orders-table">
             <thead>
               <tr>
-                <th></th> {/* Expand/collapse icon column */}
+                <th></th>
                 <th>Date</th>
                 <th>Customer Name</th>
                 <th>Phone</th>
@@ -311,13 +244,11 @@ export default function OrdersList({ refresh }) {
             <tbody>
               {filteredOrders.map(order => (
                 <React.Fragment key={order._id}>
-                  {/* Main order row */}
-                  <tr className={expandedOrder === order._id ? 'expanded-row' : ''}>
+                  <tr>
                     <td>
                       <button 
                         onClick={() => toggleExpand(order._id)}
                         className="expand-btn"
-                        title={expandedOrder === order._id ? "Hide items" : "Show items"}
                       >
                         {expandedOrder === order._id ? '▼' : '▶'}
                       </button>
@@ -351,7 +282,6 @@ export default function OrdersList({ refresh }) {
                     </td>
                   </tr>
                   
-                  {/* Expanded items row */}
                   {expandedOrder === order._id && order.items && order.items.length > 0 && (
                     <tr className="items-detail-row">
                       <td colSpan="8">
@@ -371,10 +301,6 @@ export default function OrdersList({ refresh }) {
                                   <td>{item.quantity} kg</td>
                                 </tr>
                               ))}
-                              <tr className="items-total">
-                                <td><strong>Total</strong></td>
-                                <td><strong>{calculateTotalKg(order.items)} kg</strong></td>
-                              </tr>
                             </tbody>
                           </table>
                         </div>

@@ -61,7 +61,6 @@ export default function OrderForm({ onOrderAdded }) {
       }
     ]);
 
-    // Reset current item
     setCurrentItem({
       itemName: "",
       quantity: 1
@@ -72,9 +71,6 @@ export default function OrderForm({ onOrderAdded }) {
   const removeItem = (index) => {
     setItems(items.filter((_, i) => i !== index));
   };
-
-  // Calculate total kg (optional - just for display)
-  const totalKg = items.reduce((sum, item) => sum + item.quantity, 0);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -102,12 +98,10 @@ export default function OrderForm({ onOrderAdded }) {
         type: formData.type,
         orderDate: new Date(formData.orderDate).toISOString(),
         items: items
-        // No totalAmount field
       };
       
       await addOrder(newOrder);
       
-      // Reset form
       setFormData({
         customerName: "",
         phoneNumber: "",
@@ -125,11 +119,12 @@ export default function OrderForm({ onOrderAdded }) {
     }
   };
 
+  const totalKg = items.reduce((sum, item) => sum + item.quantity, 0);
+
   return (
     <div className="order-form-container">
       <h2>📦 Add New Order</h2>
       <form onSubmit={handleSubmit} className="order-form">
-        {/* Order Date */}
         <div className="form-group">
           <label htmlFor="orderDate">Order Date *</label>
           <input
@@ -143,7 +138,6 @@ export default function OrderForm({ onOrderAdded }) {
           />
         </div>
 
-        {/* Customer Information */}
         <div className="form-group">
           <label htmlFor="customerName">Customer Name *</label>
           <input
@@ -185,7 +179,6 @@ export default function OrderForm({ onOrderAdded }) {
           </select>
         </div>
 
-        {/* Items Section */}
         <div className="items-section">
           <h3>🛒 Add Items (per kg)</h3>
           
@@ -226,7 +219,6 @@ export default function OrderForm({ onOrderAdded }) {
             </button>
           </div>
 
-          {/* Items List */}
           {items.length > 0 && (
             <div className="items-list">
               <h4>Order Items:</h4>
@@ -249,7 +241,6 @@ export default function OrderForm({ onOrderAdded }) {
                           onClick={() => removeItem(index)}
                           className="remove-item-btn"
                           disabled={loading}
-                          title="Remove item"
                         >
                           ✕
                         </button>
