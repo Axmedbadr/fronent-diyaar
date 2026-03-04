@@ -21,7 +21,8 @@ api.interceptors.request.use(request => {
     url: request.url,
     method: request.method,
     baseURL: request.baseURL,
-    fullURL: `${request.baseURL}${request.url}`
+    fullURL: `${request.baseURL}${request.url}`,
+    data: request.data // This will show the items being sent
   });
   return request;
 });
@@ -32,7 +33,16 @@ api.interceptors.response.use(
     console.log('✅ Response Success:', {
       status: response.status,
       url: response.config.url,
-      dataCount: Array.isArray(response.data) ? response.data.length : 'N/A'
+      dataCount: Array.isArray(response.data) ? response.data.length : 'N/A',
+      sampleData: Array.isArray(response.data) && response.data.length > 0 
+        ? { 
+            firstOrder: {
+              id: response.data[0]._id,
+              customerName: response.data[0].customerName,
+              itemsCount: response.data[0].items?.length || 0
+            }
+          }
+        : 'No data'
     });
     return response;
   },
@@ -74,6 +84,18 @@ export const getOrders = async (filters = {}) => {
     console.log('📦 Fetching orders with params:', filters);
     
     const response = await api.get(queryString);
+    
+    // Log items data to verify it's being received
+    if (response.data && response.data.length > 0) {
+      console.log('📦 Orders received with items:', 
+        response.data.map(order => ({
+          customer: order.customerName,
+          itemsCount: order.items?.length || 0,
+          items: order.items || []
+        }))
+      );
+    }
+    
     return response.data;
   } catch (error) {
     console.error("Error fetching orders:", error);
@@ -81,12 +103,42 @@ export const getOrders = async (filters = {}) => {
   }
 };
 
-// Add new order
+// Add new order with items
 export const addOrder = async (order) => {
   try {
-    console.log('➕ Adding new order:', order);
+    // Validate that items array is present
+    if (!order.items) {
+      console.warn('⚠️ Order has no items field, adding empty array');
+      order.items = [];
+    }
+    
+    // Validate each item has required fields
+    if (order.items.length > 0) {
+      order.items.forEach((item, index) => {
+        if (!item.itemName) {
+          throw new Error(`Item at index ${index} has no itemName`);
+        }
+        if (!item.quantity || item.quantity <= 0) {
+          throw new Error(`Item at index ${index} has invalid quantity`);
+        }
+      });
+    }
+    
+    console.log('➕ Adding new order with items:', {
+      customerName: order.customerName,
+      type: order.type,
+      phoneNumber: order.phoneNumber,
+      orderDate: order.orderDate,
+      itemsCount: order.items.length,
+      items: order.items
+    });
+    
     const response = await api.post("/", order);
-    console.log('✅ Order added successfully:', response.data);
+    console.log('✅ Order added successfully:', {
+      id: response.data._id,
+      customerName: response.data.customerName,
+      itemsCount: response.data.items?.length || 0
+    });
     return response.data;
   } catch (error) {
     console.error("Error adding order:", error);
@@ -110,7 +162,10 @@ export const getStats = async () => {
 // Update order
 export const updateOrder = async (id, order) => {
   try {
-    console.log('✏️ Updating order:', id, order);
+    console.log('✏️ Updating order:', id, {
+      customerName: order.customerName,
+      itemsCount: order.items?.length || 0
+    });
     const response = await api.put(`/${id}`, order);
     console.log('✅ Order updated successfully:', response.data);
     return response.data;
@@ -143,5 +198,29 @@ export const testConnection = async () => {
   } catch (error) {
     console.error('❌ API connection failed:', error.message);
     return false;
+  }
+};
+
+// Helper function to get orders by item (search functionality)
+export const getOrdersByItem = async (itemName) => {
+  try {
+    console.log('🔍 Searching orders by item:', itemName);
+    const response = await api.get(`/search/item?name=${encodeURIComponent(itemName)}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error searching orders by item:", error);
+    throw error;
+  }
+};
+
+// Get popular items statistics
+export const getPopularItems = async () => {
+  try {
+    console.log('📊 Fetching popular items...');
+    const response = await api.get("/stats/items");
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching popular items:", error);
+    throw error;
   }
 };

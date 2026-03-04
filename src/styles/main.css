@@ -1652,3 +1652,133 @@ button:disabled {
     margin-bottom: 5px;
   }
 }
+/* Expand/Collapse Button */
+.expand-btn {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: #4a5568;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.expand-btn:hover {
+  background: #edf2f7;
+  color: #2d3748;
+}
+
+.expanded-row {
+  background: #f7fafc !important;
+}
+
+/* Items Count */
+.items-count {
+  background: #4299e1;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.no-items {
+  color: #a0aec0;
+  font-style: italic;
+  font-size: 0.9rem;
+}
+
+.total-kg {
+  font-weight: 700;
+  color: #2d3748;
+}
+
+/* Items Detail Row */
+.items-detail-row {
+  background: #f7fafc;
+}
+
+.items-detail {
+  padding: 20px;
+  border-top: 2px dashed #cbd5e0;
+  border-bottom: 2px dashed #cbd5e0;
+}
+
+.items-detail h4 {
+  color: #2d3748;
+  margin: 0 0 15px 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.items-detail-table {
+  width: 100%;
+  max-width: 500px;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.items-detail-table th {
+  background: #edf2f7;
+  color: #4a5568;
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 10px;
+  text-align: left;
+}
+
+.items-detail-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #e2e8f0;
+  color: #2d3748;
+}
+
+.items-detail-table .items-total {
+  background: #f7fafc;
+  font-weight: 700;
+}
+
+.items-detail-table .items-total td {
+  border-top: 2px solid #cbd5e0;
+  border-bottom: none;
+}
+
+/* Update orders-table for new columns */
+.orders-table th:first-child {
+  width: 40px;
+}
+
+.orders-table td:first-child {
+  text-align: center;
+}
+
+/* Fix export button class */
+.export-btn.excel-btn {
+  padding: 12px 28px;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.3s ease;
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: white;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.export-btn.excel-btn:hover {
+  background: linear-gradient(135deg, #218838 0%, #1eaa7a 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(40, 167, 69, 0.3);
+}

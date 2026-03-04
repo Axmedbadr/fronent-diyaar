@@ -8,6 +8,7 @@ export default function OrdersList({ refresh }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [expandedOrder, setExpandedOrder] = useState(null); // For expandable rows
   const [filters, setFilters] = useState({
     type: "",
     startDate: "",
@@ -45,7 +46,11 @@ export default function OrdersList({ refresh }) {
       const filtered = orders.filter(order => 
         order.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (order.phoneNumber && order.phoneNumber.includes(searchTerm)) ||
-        order.type.toLowerCase().includes(searchTerm.toLowerCase())
+        order.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        // Search in items
+        (order.items && order.items.some(item => 
+          item.itemName.toLowerCase().includes(searchTerm.toLowerCase())
+        ))
       );
       setFilteredOrders(filtered);
     }
@@ -77,24 +82,33 @@ export default function OrdersList({ refresh }) {
     return type.toLowerCase().replace(/\s+/g, '-');
   };
 
+  const toggleExpand = (orderId) => {
+    setExpandedOrder(expandedOrder === orderId ? null : orderId);
+  };
+
+  // Calculate total kg for an order
+  const calculateTotalKg = (items) => {
+    if (!items || !items.length) return 0;
+    return items.reduce((sum, item) => sum + (item.quantity || 0), 0);
+  };
+
   // Export to Excel using exceljs
   const exportToExcel = async () => {
     try {
-      // Create a new workbook
       const workbook = new ExcelJS.Workbook();
       workbook.creator = 'Dr. Asma Analysis Tool';
       workbook.lastModifiedBy = 'Dr. Asma Analysis Tool';
       workbook.created = new Date();
       workbook.modified = new Date();
       
-      // Add worksheet
+      // Create main orders sheet
       const worksheet = workbook.addWorksheet('Orders', {
         properties: { tabColor: { argb: 'FF2C3E50' } },
         views: [{ state: 'frozen', xSplit: 0, ySplit: 1 }]
       });
       
       // Add headers with styling
-      const headers = ['Date', 'Customer Name', 'Phone Number', 'Order Type'];
+      const headers = ['Date', 'Customer Name', 'Phone', 'Type', 'Items', 'Total KG'];
       const headerRow = worksheet.addRow(headers);
       
       // Style the header row
@@ -117,18 +131,29 @@ export default function OrdersList({ refresh }) {
       // Set column widths
       worksheet.columns = [
         { width: 15 },
-        { width: 30 },
-        { width: 20 },
-        { width: 20 }
+        { width: 25 },
+        { width: 15 },
+        { width: 15 },
+        { width: 40 },
+        { width: 10 }
       ];
       
       // Add data rows
       filteredOrders.forEach((order, index) => {
+        // Format items list
+        const itemsList = order.items && order.items.length > 0
+          ? order.items.map(item => `${item.itemName}: ${item.quantity}kg`).join(', ')
+          : 'No items';
+        
+        const totalKg = calculateTotalKg(order.items);
+        
         const row = worksheet.addRow([
           new Date(order.orderDate).toLocaleDateString(),
           order.customerName,
           order.phoneNumber || '-',
-          order.type
+          order.type,
+          itemsList,
+          totalKg
         ]);
         
         // Style data rows
@@ -142,7 +167,7 @@ export default function OrdersList({ refresh }) {
           };
         });
         
-        // Alternate row colors for better readability
+        // Alternate row colors
         if (index % 2 === 0) {
           row.eachCell((cell) => {
             cell.fill = {
@@ -154,33 +179,25 @@ export default function OrdersList({ refresh }) {
         }
       });
       
-      // Add empty row
-      worksheet.addRow([]);
-      
       // Add summary row
-      const summaryRow = worksheet.addRow(['TOTAL:', '', '', `${filteredOrders.length} orders`]);
-      summaryRow.eachCell((cell, colNumber) => {
+      worksheet.addRow([]);
+      const totalKgAll = filteredOrders.reduce((sum, order) => sum + calculateTotalKg(order.items), 0);
+      const summaryRow = worksheet.addRow(['TOTAL:', '', '', '', `${filteredOrders.length} orders`, `${totalKgAll} kg`]);
+      summaryRow.eachCell((cell) => {
         cell.font = { bold: true, size: 11 };
-        cell.alignment = { vertical: 'middle', horizontal: colNumber === 1 ? 'right' : 'left' };
-        if (colNumber === 1) {
-          cell.fill = {
-            type: 'pattern',
-            pattern: 'solid',
-            fgColor: { argb: 'FFFFE699' }
-          };
-        }
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'FFFFE699' }
+        };
       });
       
-      // Merge cells for total row
-      worksheet.mergeCells(`A${summaryRow.number}:B${summaryRow.number}`);
-      
-      // Generate buffer and download
+      // Generate and download
       const buffer = await workbook.xlsx.writeBuffer();
       const blob = new Blob([buffer], { 
         type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
       });
       
-      // Create download link
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
       link.download = `orders_export_${new Date().toISOString().split('T')[0]}.xlsx`;
@@ -209,7 +226,7 @@ export default function OrdersList({ refresh }) {
           <div className="search-container">
             <input
               type="text"
-              placeholder="Search by customer, phone, or type..."
+              placeholder="Search by customer, phone, type, or item..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="search-input"
@@ -264,7 +281,7 @@ export default function OrdersList({ refresh }) {
 
         {/* Export Button */}
         <div className="export-buttons">
-          <button onClick={exportToExcel} className="export-btnexcel-btn" title="Export to Excel">
+          <button onClick={exportToExcel} className="export-btn excel-btn" title="Export to Excel">
             📊 Export to Excel
           </button>
         </div>
@@ -281,34 +298,90 @@ export default function OrdersList({ refresh }) {
           <table className="orders-table">
             <thead>
               <tr>
+                <th></th> {/* Expand/collapse icon column */}
                 <th>Date</th>
                 <th>Customer Name</th>
                 <th>Phone</th>
                 <th>Type</th>
+                <th>Items</th>
+                <th>Total KG</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {filteredOrders.map(order => (
-                <tr key={order._id}>
-                  <td>{new Date(order.orderDate).toLocaleDateString()}</td>
-                  <td>{order.customerName}</td>
-                  <td>{order.phoneNumber || '-'}</td>
-                  <td>
-                    <span className={`type-badge ${getTypeClass(order.type)}`}>
-                      {order.type}
-                    </span>
-                  </td>
-                  <td>
-                    <button
-                      onClick={() => handleDelete(order._id)}
-                      className="delete-btn"
-                      title="Delete order"
-                    >
-                      🗑️
-                    </button>
-                  </td>
-                </tr>
+                <React.Fragment key={order._id}>
+                  {/* Main order row */}
+                  <tr className={expandedOrder === order._id ? 'expanded-row' : ''}>
+                    <td>
+                      <button 
+                        onClick={() => toggleExpand(order._id)}
+                        className="expand-btn"
+                        title={expandedOrder === order._id ? "Hide items" : "Show items"}
+                      >
+                        {expandedOrder === order._id ? '▼' : '▶'}
+                      </button>
+                    </td>
+                    <td>{new Date(order.orderDate).toLocaleDateString()}</td>
+                    <td>{order.customerName}</td>
+                    <td>{order.phoneNumber || '-'}</td>
+                    <td>
+                      <span className={`type-badge ${getTypeClass(order.type)}`}>
+                        {order.type}
+                      </span>
+                    </td>
+                    <td>
+                      {order.items && order.items.length > 0 ? (
+                        <span className="items-count">
+                          {order.items.length} item{order.items.length > 1 ? 's' : ''}
+                        </span>
+                      ) : (
+                        <span className="no-items">No items</span>
+                      )}
+                    </td>
+                    <td className="total-kg">{calculateTotalKg(order.items)} kg</td>
+                    <td>
+                      <button
+                        onClick={() => handleDelete(order._id)}
+                        className="delete-btn"
+                        title="Delete order"
+                      >
+                        🗑️
+                      </button>
+                    </td>
+                  </tr>
+                  
+                  {/* Expanded items row */}
+                  {expandedOrder === order._id && order.items && order.items.length > 0 && (
+                    <tr className="items-detail-row">
+                      <td colSpan="8">
+                        <div className="items-detail">
+                          <h4>Order Items:</h4>
+                          <table className="items-detail-table">
+                            <thead>
+                              <tr>
+                                <th>Item Name</th>
+                                <th>Quantity (kg)</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {order.items.map((item, idx) => (
+                                <tr key={idx}>
+                                  <td>{item.itemName}</td>
+                                  <td>{item.quantity} kg</td>
+                                </tr>
+                              ))}
+                              <tr className="items-total">
+                                <td><strong>Total</strong></td>
+                                <td><strong>{calculateTotalKg(order.items)} kg</strong></td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
               ))}
             </tbody>
           </table>
