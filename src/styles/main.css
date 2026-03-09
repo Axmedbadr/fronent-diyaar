@@ -2341,3 +2341,418 @@ button:disabled {
     grid-template-columns: 1fr;
   }
 }
+/* Add this to your main.css file */
+
+/* Container Styles */
+.stats-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  background: linear-gradient(145deg, #f0f5fa 0%, #e6eefa 100%);
+  border-radius: 32px;
+  box-shadow: 
+    0 20px 40px -15px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+  animation: containerFloat 6s ease-in-out infinite;
+}
+
+@keyframes containerFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+/* Header Styles */
+.stats-container h3 {
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin: 0 0 1.5rem 0;
+  padding: 0 0 1rem 0;
+  background: linear-gradient(135deg, #2d4059, #4a6fa5, #9ab3d8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  position: relative;
+  display: inline-block;
+  letter-spacing: -0.02em;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+}
+
+.stats-container h3::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 120px;
+  height: 4px;
+  background: linear-gradient(90deg, #4a6fa5, #9ab3d8, #c7e0f4);
+  border-radius: 4px;
+}
+
+/* Grid Layout */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+/* Base Card Styles */
+.stat-card {
+  padding: 1.8rem 1.5rem;
+  border-radius: 28px;
+  box-shadow: 
+    0 15px 30px -10px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(255, 255, 255, 0.3) inset;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  animation: cardAppear 0.6s ease-out forwards;
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.stat-card:nth-child(1) { animation-delay: 0.1s; }
+.stat-card:nth-child(2) { animation-delay: 0.2s; }
+.stat-card:nth-child(3) { animation-delay: 0.3s; }
+.stat-card:nth-child(4) { animation-delay: 0.4s; }
+.stat-card:nth-child(5) { animation-delay: 0.5s; }
+.stat-card:nth-child(6) { animation-delay: 0.6s; }
+
+@keyframes cardAppear {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Beautiful Background Colors for Each Card */
+.stat-card:nth-child(1) {
+  background: linear-gradient(145deg, #ffd3b5, #ffaaa5); /* Peach to Coral */
+  background: linear-gradient(145deg, #ff9a9e, #fad0c4); /* Pink to Peach */
+}
+
+.stat-card:nth-child(2) {
+  background: linear-gradient(145deg, #a8edea, #fed6e3); /* Mint to Light Pink */
+  background: linear-gradient(145deg, #b6f0e6, #b8e1ff); /* Seafoam to Sky Blue */
+}
+
+.stat-card:nth-child(3) {
+  background: linear-gradient(145deg, #fbc2eb, #a6c1ee); /* Lavender to Periwinkle */
+  background: linear-gradient(145deg, #d4b5ff, #b8c0ff); /* Light Purple to Periwinkle */
+}
+
+.stat-card:nth-child(4) {
+  background: linear-gradient(145deg, #ffd89b, #c7b9ff); /* Peach to Lavender */
+  background: linear-gradient(145deg, #f6d5f7, #fbe9d7); /* Light Purple to Cream */
+}
+
+.stat-card:nth-child(5) {
+  background: linear-gradient(145deg, #c1dfc4, #deecdd); /* Sage to Mint */
+  background: linear-gradient(145deg, #b8e1ff, #d4b5ff); /* Sky Blue to Light Purple */
+}
+
+/* Alternate beautiful color combinations */
+.stat-card:nth-child(1) {
+  background: linear-gradient(135deg, #ffdde1, #ee9ca7); /* Soft Pink to Rose */
+}
+
+.stat-card:nth-child(2) {
+  background: linear-gradient(135deg, #d9e4f5, #b9d7f0); /* Light Blue to Sky Blue */
+}
+
+.stat-card:nth-child(3) {
+  background: linear-gradient(135deg, #e0c3fc, #b3b5f1); /* Light Purple to Lavender */
+}
+
+.stat-card:nth-child(4) {
+  background: linear-gradient(135deg, #ffd5b5, #feb9b0); /* Peach to Light Coral */
+}
+
+.stat-card:nth-child(5) {
+  background: linear-gradient(135deg, #b4e0d4, #a9c9e6); /* Mint to Light Blue */
+}
+
+/* Card Background Patterns */
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.4) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.6s ease;
+  pointer-events: none;
+}
+
+.stat-card:hover::before {
+  opacity: 1;
+}
+
+/* Hover Effects - Darker Version of the Same Colors */
+.stat-card:nth-child(1):hover {
+  background: linear-gradient(145deg, #ee9ca7, #ff6f91); /* Darker Pink to Magenta */
+}
+
+.stat-card:nth-child(2):hover {
+  background: linear-gradient(145deg, #b9d7f0, #8fc1f0); /* Darker Sky Blue */
+}
+
+.stat-card:nth-child(3):hover {
+  background: linear-gradient(145deg, #b3b5f1, #9899e8); /* Darker Lavender */
+}
+
+.stat-card:nth-child(4):hover {
+  background: linear-gradient(145deg, #feb9b0, #fe9e9e); /* Darker Coral */
+}
+
+.stat-card:nth-child(5):hover {
+  background: linear-gradient(145deg, #a9c9e6, #8bb5d9); /* Darker Light Blue */
+}
+
+/* Card Labels */
+.stat-label {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #2d4059;
+  margin-bottom: 1rem;
+  position: relative;
+  padding-left: 1.5rem;
+  display: flex;
+  align-items: center;
+  letter-spacing: -0.01em;
+  text-shadow: 0 1px 2px rgba(255,255,255,0.5);
+}
+
+.stat-label::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: dotGlow 2s ease-in-out infinite;
+}
+
+.stat-card:nth-child(1) .stat-label::before { 
+  background: #c44569; 
+  box-shadow: 0 0 15px #c44569;
+}
+.stat-card:nth-child(2) .stat-label::before { 
+  background: #3c9bd1; 
+  box-shadow: 0 0 15px #3c9bd1;
+}
+.stat-card:nth-child(3) .stat-label::before { 
+  background: #8a6de9; 
+  box-shadow: 0 0 15px #8a6de9;
+}
+.stat-card:nth-child(4) .stat-label::before { 
+  background: #e8836b; 
+  box-shadow: 0 0 15px #e8836b;
+}
+.stat-card:nth-child(5) .stat-label::before { 
+  background: #67a5c9; 
+  box-shadow: 0 0 15px #67a5c9;
+}
+
+@keyframes dotGlow {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.3); opacity: 0.8; box-shadow: 0 0 20px currentColor; }
+}
+
+/* Card Values */
+.stat-value {
+  font-size: 3.5rem;
+  font-weight: 800;
+  line-height: 1;
+  margin-bottom: 1rem;
+  color: #1a2639;
+  position: relative;
+  display: inline-block;
+  transition: all 0.3s ease;
+  text-shadow: 2px 2px 4px rgba(255,255,255,0.5);
+}
+
+.stat-card:hover .stat-value {
+  transform: scale(1.05);
+  color: #0f172a;
+}
+
+/* Percentage Badge */
+.stat-percentage {
+  display: inline-block;
+  padding: 0.5rem 1.2rem;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 40px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #2d4059;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(5px);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card:hover .stat-percentage {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: transparent;
+  box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.2);
+  transform: translateY(-2px);
+}
+
+/* Total Card Special Styling */
+.stat-card.total {
+  background: linear-gradient(145deg, #4a6fa5, #3a5683); /* Professional Blue */
+}
+
+.stat-card.total .stat-label {
+  color: #f8f9fa;
+}
+
+.stat-card.total .stat-label::before {
+  background: #ffd93d;
+  box-shadow: 0 0 15px #ffd93d;
+}
+
+.stat-card.total .stat-value {
+  color: #ffffff;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+}
+
+.stat-card.total .stat-percentage {
+  background: #f8f9fa;
+  color: #2d4059;
+  border-color: #4a6fa5;
+}
+
+.stat-card.total:hover {
+  background: linear-gradient(145deg, #3a5683, #2d4059);
+}
+
+.stat-card.total:hover .stat-percentage {
+  background: #ffd93d;
+  color: #2d4059;
+}
+
+/* Add decorative icons with better visibility */
+.stat-card::after {
+  content: '';
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  font-size: 5rem;
+  opacity: 0.15;
+  pointer-events: none;
+  transition: all 0.3s ease;
+}
+
+.stat-card:nth-child(1)::after { content: '👤'; }
+.stat-card:nth-child(2)::after { content: '🏪'; }
+.stat-card:nth-child(3)::after { content: '🛒'; }
+.stat-card:nth-child(4)::after { content: '🏘️'; }
+.stat-card:nth-child(5)::after { content: '🏥'; }
+.stat-card.total::after { content: '📊'; }
+
+.stat-card:hover::after {
+  opacity: 0.25;
+  transform: scale(1.1) rotate(5deg);
+}
+
+/* Loading State with beautiful gradient */
+.stats-loading {
+  padding: 4rem;
+  text-align: center;
+  font-size: 1.2rem;
+  background: linear-gradient(145deg, #ffdde1, #ee9ca7);
+  border-radius: 32px;
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.15);
+  position: relative;
+  overflow: hidden;
+  animation: loadingPulse 1.5s ease-in-out infinite;
+  color: #2d4059;
+}
+
+.stats-loading::before {
+  content: '📊';
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 1rem;
+  animation: bounce 1s ease-in-out infinite;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .stats-container {
+    padding: 1.5rem;
+    border-radius: 24px;
+  }
+
+  .stats-container h3 {
+    font-size: 2rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .stat-card {
+    padding: 1.5rem;
+  }
+
+  .stat-value {
+    font-size: 2.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-container {
+    padding: 1rem;
+  }
+
+  .stats-container h3 {
+    font-size: 1.8rem;
+  }
+
+  .stat-card {
+    padding: 1.2rem;
+  }
+
+  .stat-label {
+    font-size: 1.1rem;
+  }
+
+  .stat-value {
+    font-size: 2.2rem;
+  }
+
+  .stat-percentage {
+    padding: 0.4rem 1rem;
+    font-size: 0.9rem;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .stats-container {
+    box-shadow: none;
+    background: white;
+  }
+
+  .stat-card {
+    break-inside: avoid;
+    box-shadow: none;
+    border: 1px solid #ccc;
+    background: white !important;
+  }
+
+  .stat-card::after,
+  .stat-card::before {
+    display: none;
+  }
+}
