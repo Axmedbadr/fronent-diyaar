@@ -2653,8 +2653,8 @@ button:disabled {
 
 .stat-card:nth-child(1)::after { content: '👤'; }
 .stat-card:nth-child(2)::after { content: '🏪'; }
-.stat-card:nth-child(3)::after { content: '🛒'; }
-.stat-card:nth-child(4)::after { content: '🏘️'; }
+.stat-card:nth-child(3)::after { content: '🏘️'; }
+.stat-card:nth-child(4)::after { content: '🛒'; }
 .stat-card:nth-child(5)::after { content: '🏥'; }
 .stat-card.total::after { content: '📊'; }
 
