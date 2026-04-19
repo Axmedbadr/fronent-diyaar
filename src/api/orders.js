@@ -1,10 +1,11 @@
 import axios from "axios";
 
-// Use Railway URL as default
-const API_BASE_URL = import.meta.env.VITE_API_URL || "https://diyaar-project-customer-analysis-tool-production.up.railway.app";
+// Use localhost for development
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000"; // Removed trailing slash
 const API_URL = `${API_BASE_URL}/api/orders`;
 
 console.log('🌐 API Base URL:', API_BASE_URL);
+console.log('📡 API Orders URL:', API_URL);
 
 // Create axios instance
 const api = axios.create({
@@ -15,11 +16,14 @@ const api = axios.create({
   },
 });
 
+// ==================== BASIC CRUD OPERATIONS ====================
+
 // Fetch all orders with optional filters
 export const getOrders = async (filters = {}) => {
   try {
     const params = new URLSearchParams();
     if (filters.type) params.append("type", filters.type);
+    if (filters.area) params.append("area", filters.area);
     if (filters.startDate) params.append("startDate", filters.startDate);
     if (filters.endDate) params.append("endDate", filters.endDate);
     
@@ -32,7 +36,7 @@ export const getOrders = async (filters = {}) => {
   }
 };
 
-// Add new order with items
+// Add new order with items and area
 export const addOrder = async (order) => {
   try {
     console.log('➕ Adding new order:', order);
@@ -40,28 +44,6 @@ export const addOrder = async (order) => {
     return response.data;
   } catch (error) {
     console.error("Error adding order:", error);
-    throw error;
-  }
-};
-
-// Get statistics by order type
-export const getStats = async () => {
-  try {
-    const response = await api.get("/stats");
-    return response.data;
-  } catch (error) {
-    console.error("Error fetching stats:", error);
-    throw error;
-  }
-};
-
-// Get popular items statistics
-export const getPopularItems = async () => {
-  try {
-    const response = await api.get("/stats/items");
-    return response.data;
-  } catch (error) {
-    console.error("Error fetching popular items:", error);
     throw error;
   }
 };
@@ -88,10 +70,67 @@ export const deleteOrder = async (id) => {
   }
 };
 
-// Search orders by item name
-export const searchOrdersByItem = async (itemName) => {
+// ==================== STATISTICS & ANALYTICS ====================
+
+// Get statistics by order type (NOW INCLUDES COMMUNITY WOMEN!)
+export const getStats = async () => {
   try {
-    const response = await api.get(`/search/item?name=${encodeURIComponent(itemName)}`);
+    const response = await api.get("/stats");
+    console.log("📊 Stats from API:", response.data); // Debug log
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching stats:", error);
+    throw error;
+  }
+};
+
+// Get statistics by area
+export const getAreaStats = async () => {
+  try {
+    const response = await api.get("/stats/area");
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching area stats:", error);
+    throw error;
+  }
+};
+
+// Get statistics by type and area combined
+export const getTypeAreaStats = async () => {
+  try {
+    const response = await api.get("/stats/type-area");
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching type-area stats:", error);
+    throw error;
+  }
+};
+
+// Get popular items statistics (with optional area filter)
+export const getPopularItems = async (area = null) => {
+  try {
+    let url = "/stats/items";
+    if (area) {
+      url += `?area=${encodeURIComponent(area)}`;
+    }
+    const response = await api.get(url);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching popular items:", error);
+    throw error;
+  }
+};
+
+// ==================== SEARCH & CUSTOMER ====================
+
+// Search orders by item name (with optional area filter)
+export const searchOrdersByItem = async (itemName, area = null) => {
+  try {
+    let url = `/search/item?name=${encodeURIComponent(itemName)}`;
+    if (area) {
+      url += `&area=${encodeURIComponent(area)}`;
+    }
+    const response = await api.get(url);
     return response.data;
   } catch (error) {
     console.error("Error searching orders by item:", error);
@@ -110,13 +149,55 @@ export const getCustomerHistory = async (phone) => {
   }
 };
 
+// ==================== UTILITY FUNCTIONS ====================
+
 // Test connection
 export const testConnection = async () => {
   try {
     const response = await api.get('/');
+    console.log("✅ API Connection test:", response.data);
     return true;
   } catch (error) {
-    console.error('API connection failed:', error.message);
+    console.error('❌ API connection failed:', error.message);
     return false;
   }
+};
+
+// Get orders by specific area
+export const getOrdersByArea = async (area) => {
+  try {
+    const response = await api.get(`/?area=${encodeURIComponent(area)}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching orders for area ${area}:`, error);
+    throw error;
+  }
+};
+
+// Get orders by type in specific area
+export const getOrdersByTypeAndArea = async (type, area) => {
+  try {
+    const response = await api.get(`/?type=${encodeURIComponent(type)}&area=${encodeURIComponent(area)}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching orders for type ${type} in area ${area}:`, error);
+    throw error;
+  }
+};
+
+// ==================== EXPORT ALL FUNCTIONS ====================
+export default {
+  getOrders,
+  addOrder,
+  updateOrder,
+  deleteOrder,
+  getStats,
+  getAreaStats,
+  getTypeAreaStats,
+  getPopularItems,
+  searchOrdersByItem,
+  getCustomerHistory,
+  testConnection,
+  getOrdersByArea,
+  getOrdersByTypeAndArea
 };
