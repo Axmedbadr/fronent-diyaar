@@ -569,3 +569,302 @@
     right: 10px;
   }
 }
+
+/* Order Form Container */
+.order-form-container {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.order-form-container h2 {
+  color: white;
+  text-align: center;
+  margin-bottom: 2rem;
+  font-size: 2rem;
+  font-weight: 700;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Form Styles */
+.order-form-container form {
+  background: white;
+  padding: 2rem;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+/* Input Fields */
+.order-form-container input,
+.order-form-container select {
+  width: 100%;
+  padding: 12px 16px;
+  margin-bottom: 1rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background: #f8f9fa;
+}
+
+.order-form-container input:focus,
+.order-form-container select:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  background: white;
+}
+
+.order-form-container input:hover,
+.order-form-container select:hover {
+  border-color: #764ba2;
+}
+
+/* Area Suggestions */
+.area-suggestions {
+  position: relative;
+  margin-top: -0.5rem;
+  margin-bottom: 1rem;
+  background: white;
+  border: 2px solid #667eea;
+  border-radius: 10px;
+  max-height: 200px;
+  overflow-y: auto;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+}
+
+.area-suggestions div {
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 0.95rem;
+}
+
+.area-suggestions div:hover {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  transform: translateX(5px);
+}
+
+/* Item List */
+.order-form-container form > div {
+  background: #f8f9fa;
+  padding: 10px 15px;
+  margin: 10px 0;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.order-form-container form > div button {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 5px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: bold;
+}
+
+.order-form-container form > div button:hover {
+  background: #c82333;
+  transform: scale(1.05);
+}
+
+/* Buttons */
+.order-form-container button {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.order-form-container button[type="button"] {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  margin-right: 10px;
+  margin-bottom: 1rem;
+}
+
+.order-form-container button[type="button"]:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.order-form-container button[type="submit"] {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: white;
+  width: 100%;
+  font-size: 1.1rem;
+  margin-top: 1rem;
+}
+
+.order-form-container button[type="submit"]:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+}
+
+.order-form-container button[type="submit"]:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Total KG Display */
+.order-form-container p {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 12px;
+  border-radius: 10px;
+  text-align: center;
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin: 1rem 0;
+}
+
+/* Messages */
+.success-message,
+.error-message {
+  padding: 12px;
+  border-radius: 10px;
+  margin-bottom: 1rem;
+  text-align: center;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.success-message {
+  background: #d4edda;
+  color: #155724;
+  border: 2px solid #c3e6cb;
+}
+
+.error-message {
+  background: #f8d7da;
+  color: #721c24;
+  border: 2px solid #f5c6cb;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .order-form-container {
+    margin: 1rem;
+    padding: 1rem;
+  }
+  
+  .order-form-container form {
+    padding: 1.5rem;
+  }
+  
+  .order-form-container h2 {
+    font-size: 1.5rem;
+  }
+  
+  .order-form-container button {
+    padding: 10px 20px;
+  }
+  
+  .order-form-container form > div {
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
+  }
+  
+  .order-form-container form > div button {
+    width: auto;
+    padding: 5px 20px;
+  }
+}
+
+/* Loading Animation */
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.order-form-container button[type="submit"]:disabled {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Custom Scrollbar */
+.area-suggestions::-webkit-scrollbar {
+  width: 8px;
+}
+
+.area-suggestions::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.area-suggestions::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 10px;
+}
+
+.area-suggestions::-webkit-scrollbar-thumb:hover {
+  background: #764ba2;
+}
+
+/* Input Placeholder Styling */
+.order-form-container input::placeholder {
+  color: #999;
+  font-style: italic;
+}
+
+/* Focus Visible for Accessibility */
+.order-form-container input:focus-visible,
+.order-form-container select:focus-visible,
+.order-form-container button:focus-visible {
+  outline: 3px solid #764ba2;
+  outline-offset: 2px;
+}
