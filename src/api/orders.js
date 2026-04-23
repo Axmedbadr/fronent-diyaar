@@ -1,13 +1,16 @@
 import axios from "axios";
 
-// Use localhost for development
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000"; // Removed trailing slash
+const API_BASE_URL = import.meta.env.VITE_API_URL;
+
+if (!API_BASE_URL) {
+  throw new Error("❌ VITE_API_URL is not defined");
+}
+
 const API_URL = `${API_BASE_URL}/api/orders`;
 
 console.log('🌐 API Base URL:', API_BASE_URL);
 console.log('📡 API Orders URL:', API_URL);
 
-// Create axios instance
 const api = axios.create({
   baseURL: API_URL,
   timeout: 30000,
