@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { addOrder, getAreaStats } from "../api/orders";
 
-// Order types
 const ORDER_TYPES = [
   "Individuals",
   "Shops",
@@ -11,7 +10,6 @@ const ORDER_TYPES = [
   "Community-Women"
 ];
 
-// Items
 const ITEMS = [
   { id: 1, name: "Mashaali kg" },
   { id: 2, name: "M.plus kg" },
@@ -26,7 +24,7 @@ const ITEMS = [
 export default function OrderForm({ onOrderAdded }) {
   const [formData, setFormData] = useState({
     customerName: "",
-    phoneNumber: "",
+    phoneNumber: "", // ✅ muhiim
     type: "Individuals",
     area: "",
     orderDate: new Date().toISOString().split("T")[0]
@@ -42,7 +40,6 @@ export default function OrderForm({ onOrderAdded }) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
-  // 🔥 Areas states
   const [frequentAreas, setFrequentAreas] = useState([]);
   const [showAreaSuggestions, setShowAreaSuggestions] = useState(false);
   const [loadingAreas, setLoadingAreas] = useState(false);
@@ -52,17 +49,12 @@ export default function OrderForm({ onOrderAdded }) {
     fetchFrequentAreas();
   }, []);
 
-  // ✅ STRICT API validation (NO fake data)
   const fetchFrequentAreas = async () => {
     setLoadingAreas(true);
     setAreaError(false);
 
     try {
       const areaStats = await getAreaStats();
-
-      if (!Array.isArray(areaStats)) {
-        throw new Error("Invalid API response");
-      }
 
       const validAreas = areaStats
         .filter(stat =>
@@ -78,16 +70,11 @@ export default function OrderForm({ onOrderAdded }) {
           count: stat.count
         }));
 
-      if (validAreas.length === 0) {
-        throw new Error("No valid area data");
-      }
-
       setFrequentAreas(validAreas);
-
     } catch (err) {
-      console.error("❌ Area API Error:", err);
+      console.error(err);
       setAreaError(true);
-      setFrequentAreas([]); // ❌ no fallback
+      setFrequentAreas([]);
     } finally {
       setLoadingAreas(false);
     }
@@ -151,6 +138,7 @@ export default function OrderForm({ onOrderAdded }) {
     e.preventDefault();
 
     if (!formData.customerName.trim()) return setError("Customer name required");
+    if (!formData.phoneNumber.trim()) return setError("Phone number required"); // ✅ added
     if (!formData.area.trim()) return setError("Area required");
     if (items.length === 0) return setError("Add at least one item");
 
@@ -189,11 +177,7 @@ export default function OrderForm({ onOrderAdded }) {
 
       {success && <div className="success-message">✅ Order created</div>}
       {error && <div className="error-message">⚠️ {error}</div>}
-      {areaError && (
-        <div className="error-message">
-          ⚠️ System cilad ayaa ku jirta (areas)
-        </div>
-      )}
+      {areaError && <div className="error-message">⚠️ Area error</div>}
 
       <form onSubmit={handleSubmit}>
         <input
@@ -201,6 +185,15 @@ export default function OrderForm({ onOrderAdded }) {
           name="customerName"
           placeholder="Customer name"
           value={formData.customerName}
+          onChange={handleChange}
+        />
+
+        {/* ✅ NEW PHONE INPUT */}
+        <input
+          type="text"
+          name="phoneNumber"
+          placeholder="Phone number"
+          value={formData.phoneNumber}
           onChange={handleChange}
         />
 
@@ -213,7 +206,6 @@ export default function OrderForm({ onOrderAdded }) {
           onFocus={() => setShowAreaSuggestions(true)}
         />
 
-        {/* Suggestions */}
         {showAreaSuggestions && filteredAreas.length > 0 && (
           <div className="area-suggestions">
             {filteredAreas.map((a, i) => (
@@ -230,7 +222,6 @@ export default function OrderForm({ onOrderAdded }) {
           ))}
         </select>
 
-        {/* Items */}
         <select name="itemName" value={currentItem.itemName} onChange={handleItemChange}>
           <option value="">Select item</option>
           {ITEMS.map(i => (
@@ -250,7 +241,7 @@ export default function OrderForm({ onOrderAdded }) {
         {items.map((item, i) => (
           <div key={i}>
             {item.itemName} - {item.quantity}kg
-            <button onClick={() => removeItem(i)}>x</button>
+            <button type="button" onClick={() => removeItem(i)}>x</button>
           </div>
         ))}
 
