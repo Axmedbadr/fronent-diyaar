@@ -24,7 +24,7 @@ const ITEMS = [
 export default function OrderForm({ onOrderAdded }) {
   const [formData, setFormData] = useState({
     customerName: "",
-    phoneNumber: "", // ✅ muhiim
+    phoneNumber: "",
     type: "Individuals",
     area: "",
     orderDate: new Date().toISOString().split("T")[0]
@@ -42,7 +42,6 @@ export default function OrderForm({ onOrderAdded }) {
 
   const [frequentAreas, setFrequentAreas] = useState([]);
   const [showAreaSuggestions, setShowAreaSuggestions] = useState(false);
-  const [loadingAreas, setLoadingAreas] = useState(false);
   const [areaError, setAreaError] = useState(false);
 
   useEffect(() => {
@@ -50,9 +49,6 @@ export default function OrderForm({ onOrderAdded }) {
   }, []);
 
   const fetchFrequentAreas = async () => {
-    setLoadingAreas(true);
-    setAreaError(false);
-
     try {
       const areaStats = await getAreaStats();
 
@@ -60,7 +56,6 @@ export default function OrderForm({ onOrderAdded }) {
         .filter(stat =>
           stat &&
           typeof stat._id === "string" &&
-          stat._id.trim() !== "" &&
           typeof stat.count === "number"
         )
         .sort((a, b) => b.count - a.count)
@@ -74,9 +69,6 @@ export default function OrderForm({ onOrderAdded }) {
     } catch (err) {
       console.error(err);
       setAreaError(true);
-      setFrequentAreas([]);
-    } finally {
-      setLoadingAreas(false);
     }
   };
 
@@ -103,7 +95,7 @@ export default function OrderForm({ onOrderAdded }) {
 
   const addItem = () => {
     if (!currentItem.itemName) return setError("Select item");
-    if (currentItem.quantity <= 0) return setError("Quantity > 0");
+    if (currentItem.quantity <= 0) return setError("Quantity must be > 0");
 
     setItems([
       ...items,
@@ -137,8 +129,9 @@ export default function OrderForm({ onOrderAdded }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!formData.orderDate) return setError("Date required");
     if (!formData.customerName.trim()) return setError("Customer name required");
-    if (!formData.phoneNumber.trim()) return setError("Phone number required"); // ✅ added
+    if (!formData.phoneNumber.trim()) return setError("Phone number required");
     if (!formData.area.trim()) return setError("Area required");
     if (items.length === 0) return setError("Add at least one item");
 
@@ -148,7 +141,7 @@ export default function OrderForm({ onOrderAdded }) {
     try {
       await addOrder({
         ...formData,
-        orderDate: new Date(formData.orderDate).toISOString(),
+        orderDate: new Date(formData.orderDate), // ✅ fixed
         items
       });
 
@@ -180,6 +173,16 @@ export default function OrderForm({ onOrderAdded }) {
       {areaError && <div className="error-message">⚠️ Area error</div>}
 
       <form onSubmit={handleSubmit}>
+
+        {/* ✅ DATE */}
+        <input
+          type="date"
+          name="orderDate"
+          value={formData.orderDate}
+          max={new Date().toISOString().split("T")[0]}
+          onChange={handleChange}
+        />
+
         <input
           type="text"
           name="customerName"
@@ -188,7 +191,6 @@ export default function OrderForm({ onOrderAdded }) {
           onChange={handleChange}
         />
 
-        {/* ✅ NEW PHONE INPUT */}
         <input
           type="text"
           name="phoneNumber"
@@ -222,7 +224,12 @@ export default function OrderForm({ onOrderAdded }) {
           ))}
         </select>
 
-        <select name="itemName" value={currentItem.itemName} onChange={handleItemChange}>
+        {/* ITEMS */}
+        <select
+          name="itemName"
+          value={currentItem.itemName}
+          onChange={handleItemChange}
+        >
           <option value="">Select item</option>
           {ITEMS.map(i => (
             <option key={i.id} value={i.name}>{i.name}</option>
@@ -231,6 +238,7 @@ export default function OrderForm({ onOrderAdded }) {
 
         <input
           type="number"
+          step="0.1"
           name="quantity"
           value={currentItem.quantity}
           onChange={handleItemChange}
@@ -240,7 +248,7 @@ export default function OrderForm({ onOrderAdded }) {
 
         {items.map((item, i) => (
           <div key={i}>
-            {item.itemName} - {item.quantity}kg
+            {item.itemName} - {item.quantity} kg
             <button type="button" onClick={() => removeItem(i)}>x</button>
           </div>
         ))}
