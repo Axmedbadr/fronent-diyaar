@@ -1,23 +1,4 @@
-import axios from "axios";
-
-const API_BASE_URL = import.meta.env.VITE_API_URL;
-
-if (!API_BASE_URL) {
-  throw new Error("❌ VITE_API_URL is not defined");
-}
-
-const API_URL = `${API_BASE_URL}/api/orders`;
-
-console.log('🌐 API Base URL:', API_BASE_URL);
-console.log('📡 API Orders URL:', API_URL);
-
-const api = axios.create({
-  baseURL: API_URL,
-  timeout: 30000,
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
+import { apiClient } from "./client";
 
 // ==================== BASIC CRUD OPERATIONS ====================
 
@@ -31,7 +12,7 @@ export const getOrders = async (filters = {}) => {
     if (filters.endDate) params.append("endDate", filters.endDate);
     
     const queryString = params.toString() ? `/?${params.toString()}` : '/';
-    const response = await api.get(queryString);
+    const response = await apiClient.get(`/orders${queryString}`);
     return response.data;
   } catch (error) {
     console.error("Error fetching orders:", error);
@@ -43,7 +24,7 @@ export const getOrders = async (filters = {}) => {
 export const addOrder = async (order) => {
   try {
     console.log('➕ Adding new order:', order);
-    const response = await api.post("/", order);
+    const response = await apiClient.post("/orders/", order);
     return response.data;
   } catch (error) {
     console.error("Error adding order:", error);
@@ -54,7 +35,7 @@ export const addOrder = async (order) => {
 // Update order
 export const updateOrder = async (id, order) => {
   try {
-    const response = await api.put(`/${id}`, order);
+    const response = await apiClient.put(`/orders/${id}`, order);
     return response.data;
   } catch (error) {
     console.error("Error updating order:", error);
@@ -65,7 +46,7 @@ export const updateOrder = async (id, order) => {
 // Delete order
 export const deleteOrder = async (id) => {
   try {
-    const response = await api.delete(`/${id}`);
+    const response = await apiClient.delete(`/orders/${id}`);
     return response.data;
   } catch (error) {
     console.error("Error deleting order:", error);
@@ -78,7 +59,7 @@ export const deleteOrder = async (id) => {
 // Get statistics by order type (NOW INCLUDES COMMUNITY WOMEN!)
 export const getStats = async () => {
   try {
-    const response = await api.get("/stats");
+    const response = await apiClient.get("/orders/stats");
     console.log("📊 Stats from API:", response.data); // Debug log
     return response.data;
   } catch (error) {
@@ -90,7 +71,7 @@ export const getStats = async () => {
 // Get statistics by area
 export const getAreaStats = async () => {
   try {
-    const response = await api.get("/stats/area");
+    const response = await apiClient.get("/orders/stats/area");
     return response.data;
   } catch (error) {
     console.error("Error fetching area stats:", error);
@@ -101,7 +82,7 @@ export const getAreaStats = async () => {
 // Get statistics by type and area combined
 export const getTypeAreaStats = async () => {
   try {
-    const response = await api.get("/stats/type-area");
+    const response = await apiClient.get("/orders/stats/type-area");
     return response.data;
   } catch (error) {
     console.error("Error fetching type-area stats:", error);
@@ -112,11 +93,11 @@ export const getTypeAreaStats = async () => {
 // Get popular items statistics (with optional area filter)
 export const getPopularItems = async (area = null) => {
   try {
-    let url = "/stats/items";
+    let url = "/orders/stats/items";
     if (area) {
       url += `?area=${encodeURIComponent(area)}`;
     }
-    const response = await api.get(url);
+    const response = await apiClient.get(url);
     return response.data;
   } catch (error) {
     console.error("Error fetching popular items:", error);
@@ -129,11 +110,11 @@ export const getPopularItems = async (area = null) => {
 // Search orders by item name (with optional area filter)
 export const searchOrdersByItem = async (itemName, area = null) => {
   try {
-    let url = `/search/item?name=${encodeURIComponent(itemName)}`;
+    let url = `/orders/search/item?name=${encodeURIComponent(itemName)}`;
     if (area) {
       url += `&area=${encodeURIComponent(area)}`;
     }
-    const response = await api.get(url);
+    const response = await apiClient.get(url);
     return response.data;
   } catch (error) {
     console.error("Error searching orders by item:", error);
@@ -144,7 +125,7 @@ export const searchOrdersByItem = async (itemName, area = null) => {
 // Get customer history by phone
 export const getCustomerHistory = async (phone) => {
   try {
-    const response = await api.get(`/customer/${phone}`);
+    const response = await apiClient.get(`/orders/customer/${phone}`);
     return response.data;
   } catch (error) {
     console.error("Error fetching customer history:", error);
@@ -157,7 +138,7 @@ export const getCustomerHistory = async (phone) => {
 // Test connection
 export const testConnection = async () => {
   try {
-    const response = await api.get('/');
+    const response = await apiClient.get("/orders/");
     console.log("✅ API Connection test:", response.data);
     return true;
   } catch (error) {
@@ -169,7 +150,7 @@ export const testConnection = async () => {
 // Get orders by specific area
 export const getOrdersByArea = async (area) => {
   try {
-    const response = await api.get(`/?area=${encodeURIComponent(area)}`);
+    const response = await apiClient.get(`/orders/?area=${encodeURIComponent(area)}`);
     return response.data;
   } catch (error) {
     console.error(`Error fetching orders for area ${area}:`, error);
@@ -180,7 +161,9 @@ export const getOrdersByArea = async (area) => {
 // Get orders by type in specific area
 export const getOrdersByTypeAndArea = async (type, area) => {
   try {
-    const response = await api.get(`/?type=${encodeURIComponent(type)}&area=${encodeURIComponent(area)}`);
+    const response = await apiClient.get(
+      `/orders/?type=${encodeURIComponent(type)}&area=${encodeURIComponent(area)}`
+    );
     return response.data;
   } catch (error) {
     console.error(`Error fetching orders for type ${type} in area ${area}:`, error);
