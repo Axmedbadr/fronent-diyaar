@@ -77,15 +77,8 @@ export default function Login() {
             {loading ? "Please wait..." : mode === "login" ? "Login" : "Register"}
           </button>
         </form>
-        <button
-          type="button"
-          className="toggle-auth-btn"
-          onClick={() => setMode((prev) => (prev === "login" ? "register" : "login"))}
-        >
-          {mode === "login"
-            ? "Need an account? Register"
-            : "Already have an account? Login"}
-        </button>
+        
+          
       </div>
     </div>
   );
