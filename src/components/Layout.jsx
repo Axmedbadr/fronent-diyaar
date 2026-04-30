@@ -9,7 +9,7 @@ export default function Layout({ children }) {
     <div className="layout">
       <header className="header">
         <div className="container">
-          <h1>📊 Diyaar  Analysis Tool</h1>
+          <h1>📊 Diyaar Orders Management System</h1>
           <p className="subtitle">Manage and analyze your customer orders</p>
           {isAuthenticated && (
             <div className="auth-header-row">
