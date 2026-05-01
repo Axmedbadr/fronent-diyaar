@@ -1,6 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { getOrders, deleteOrder } from "../api/orders";
-import ExcelJS from 'exceljs';
+import ExcelJS from "exceljs";
+
+const TYPE_BADGE = {
+  "Individuals":          "bg-brand-600/20 text-brand-400 border-brand-500/30",
+  "Shops":                "bg-emerald-600/20 text-emerald-400 border-emerald-500/30",
+  "Supermarkets":         "bg-violet-600/20 text-violet-400 border-violet-500/30",
+  "Pre-Urban":            "bg-amber-600/20 text-amber-400 border-amber-500/30",
+  "SOFHA Health Centers": "bg-pink-600/20 text-pink-400 border-pink-500/30",
+  "Community-Women":      "bg-cyan-600/20 text-cyan-400 border-cyan-500/30",
+};
 
 export default function OrdersList({ refresh }) {
   const [orders, setOrders] = useState([]);
@@ -9,296 +18,190 @@ export default function OrdersList({ refresh }) {
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedOrder, setExpandedOrder] = useState(null);
-  const [filters, setFilters] = useState({
-    type: "",
-    startDate: "",
-    endDate: ""
-  });
+  const [filters, setFilters] = useState({ type: "", startDate: "", endDate: "" });
 
   const fetchOrders = async () => {
     setLoading(true);
     try {
       const data = await getOrders(filters);
-      const sortedData = [...data].sort((a, b) => 
-        new Date(b.orderDate) - new Date(a.orderDate)
-      );
-      setOrders(sortedData);
-      setFilteredOrders(sortedData);
+      const sorted = [...data].sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate));
+      setOrders(sorted);
+      setFilteredOrders(sorted);
       setError("");
-    } catch (err) {
+    } catch {
       setError("Failed to fetch orders");
-      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchOrders();
-  }, [refresh, filters]);
+  useEffect(() => { fetchOrders(); }, [refresh, filters]);
 
   useEffect(() => {
-    if (searchTerm.trim() === "") {
-      setFilteredOrders(orders);
-    } else {
-      const filtered = orders.filter(order => 
-        order.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (order.phoneNumber && order.phoneNumber.includes(searchTerm)) ||
-        order.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (order.items && order.items.some(item => 
-          item.itemName.toLowerCase().includes(searchTerm.toLowerCase())
-        ))
-      );
-      setFilteredOrders(filtered);
-    }
+    if (!searchTerm.trim()) return setFilteredOrders(orders);
+    const q = searchTerm.toLowerCase();
+    setFilteredOrders(orders.filter(o =>
+      o.customerName.toLowerCase().includes(q) ||
+      (o.phoneNumber && o.phoneNumber.includes(q)) ||
+      o.type.toLowerCase().includes(q) ||
+      o.items?.some(i => i.itemName.toLowerCase().includes(q))
+    ));
   }, [searchTerm, orders]);
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this order?")) return;
-    
-    try {
-      await deleteOrder(id);
-      fetchOrders();
-    } catch (err) {
-      setError("Failed to delete order");
-      console.error(err);
-    }
+    if (!window.confirm("Delete this order?")) return;
+    try { await deleteOrder(id); fetchOrders(); } catch { setError("Failed to delete order"); }
   };
 
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
-    setFilters(prev => ({ ...prev, [name]: value }));
-  };
-
-  const clearFilters = () => {
-    setFilters({ type: "", startDate: "", endDate: "" });
-    setSearchTerm("");
-  };
-
-  const getTypeClass = (type) => {
-    return type.toLowerCase().replace(/\s+/g, '-');
-  };
-
-  const toggleExpand = (orderId) => {
-    setExpandedOrder(expandedOrder === orderId ? null : orderId);
-  };
-
-  const calculateTotalKg = (items) => {
-    if (!items || !items.length) return 0;
-    return items.reduce((sum, item) => sum + (item.quantity || 0), 0);
-  };
+  const calcKg = (items) => items?.reduce((s, i) => s + (i.quantity || 0), 0) || 0;
 
   const exportToExcel = async () => {
-    try {
-      const workbook = new ExcelJS.Workbook();
-      workbook.creator = 'Dr. Asma Analysis Tool';
-      
-      const worksheet = workbook.addWorksheet('Orders');
-      
-      const headers = ['Date', 'Customer Name', 'Phone', 'Type', 'Items', 'Total KG'];
-      const headerRow = worksheet.addRow(headers);
-      
-      headerRow.eachCell((cell) => {
-        cell.font = { bold: true };
-        cell.fill = {
-          type: 'pattern',
-          pattern: 'solid',
-          fgColor: { argb: 'FF2C3E50' }
-        };
-        cell.font = { color: { argb: 'FFFFFFFF' }, bold: true };
-      });
-      
-      worksheet.columns = [
-        { width: 15 },
-        { width: 25 },
-        { width: 15 },
-        { width: 15 },
-        { width: 40 },
-        { width: 10 }
-      ];
-      
-      filteredOrders.forEach((order, index) => {
-        const itemsList = order.items && order.items.length > 0
-          ? order.items.map(item => `${item.itemName}: ${item.quantity}kg`).join(', ')
-          : 'No items';
-        
-        const totalKg = calculateTotalKg(order.items);
-        
-        worksheet.addRow([
-          new Date(order.orderDate).toLocaleDateString(),
-          order.customerName,
-          order.phoneNumber || '-',
-          order.type,
-          itemsList,
-          totalKg
-        ]);
-      });
-      
-      const buffer = await workbook.xlsx.writeBuffer();
-      const blob = new Blob([buffer], { 
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
-      });
-      
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = `orders_export_${new Date().toISOString().split('T')[0]}.xlsx`;
-      link.click();
-      
-    } catch (error) {
-      console.error('Error exporting to Excel:', error);
-      setError('Failed to export to Excel');
-    }
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet("Orders");
+    const headers = ["Date", "Customer Name", "Phone", "Type", "Items", "Total KG"];
+    const hRow = ws.addRow(headers);
+    hRow.eachCell(c => {
+      c.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF1e293b" } };
+      c.font = { color: { argb: "FFe2e8f0" }, bold: true };
+    });
+    ws.columns = [{ width: 15 }, { width: 25 }, { width: 15 }, { width: 20 }, { width: 45 }, { width: 12 }];
+    filteredOrders.forEach(o => ws.addRow([
+      new Date(o.orderDate).toLocaleDateString(),
+      o.customerName,
+      o.phoneNumber || "-",
+      o.type,
+      o.items?.map(i => `${i.itemName}: ${i.quantity}kg`).join(", ") || "No items",
+      calcKg(o.items),
+    ]));
+    const buf = await wb.xlsx.writeBuffer();
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
+    a.download = `orders_${new Date().toISOString().split("T")[0]}.xlsx`;
+    a.click();
   };
 
-  if (loading && orders.length === 0) {
-    return <div className="loading">Loading orders...</div>;
-  }
-
   return (
-    <div className="orders-list-container">
-      <div className="orders-header">
-        <h2>Orders ({filteredOrders.length})</h2>
-        
-        <div className="filters">
-          <div className="search-container">
-            <input
-              type="text"
-              placeholder="Search by customer, phone, type, or item..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="search-input"
-            />
-            {searchTerm && (
-              <button 
-                onClick={() => setSearchTerm("")} 
-                className="clear-search-btn"
-              >
-                ✕
-              </button>
-            )}
+    <div className="glass-card overflow-hidden animate-fade-in">
+      {/* Header */}
+      <div className="p-5 border-b border-white/5 space-y-3">
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-lg bg-emerald-600/20 border border-emerald-500/30 flex items-center justify-center text-sm">📋</div>
+            <h2 className="text-sm font-bold text-slate-200 font-display">
+              Orders <span className="text-slate-500 font-normal">({filteredOrders.length})</span>
+            </h2>
           </div>
-
-          <select
-            name="type"
-            value={filters.type}
-            onChange={handleFilterChange}
-            className="filter-select"
-          >
-            <option value="">All Types</option>
-            <option value="Individuals">Individuals</option>
-            <option value="Shops">Shops</option>
-            <option value="Supermarkets">Supermarkets</option>
-            <option value="Pre-Urban">Pre-Urban</option>
-            <option value="SOFHA Health Centers">SOFHA Health Centers</option>
-          </select>
-
-          <input
-            type="date"
-            name="startDate"
-            value={filters.startDate}
-            onChange={handleFilterChange}
-            className="filter-date"
-          />
-
-          <input
-            type="date"
-            name="endDate"
-            value={filters.endDate}
-            onChange={handleFilterChange}
-            className="filter-date"
-          />
-
-          <button onClick={clearFilters} className="clear-filters-btn">
-            Clear All
+          <button onClick={exportToExcel} className="btn-ghost text-xs flex items-center gap-1.5">
+            <span>📊</span> Export Excel
           </button>
         </div>
 
-        <div className="export-buttons">
-          <button onClick={exportToExcel} className="export-btn excel-btn">
-            📊 Export to Excel
+        {/* Filters */}
+        <div className="flex flex-wrap gap-2">
+          <div className="relative flex-1 min-w-48">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs">🔍</span>
+            <input type="text" placeholder="Search customer, phone, type, item…"
+              value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
+              className="input-field pl-8 text-xs h-9" />
+          </div>
+          <select name="type" value={filters.type}
+            onChange={e => setFilters(p => ({ ...p, type: e.target.value }))}
+            className="input-field w-auto text-xs h-9">
+            <option value="">All Types</option>
+            {["Individuals","Shops","Supermarkets","Pre-Urban","SOFHA Health Centers","Community-Women"].map(t =>
+              <option key={t} value={t}>{t}</option>)}
+          </select>
+          <input type="date" value={filters.startDate}
+            onChange={e => setFilters(p => ({ ...p, startDate: e.target.value }))}
+            className="input-field w-auto text-xs h-9" />
+          <input type="date" value={filters.endDate}
+            onChange={e => setFilters(p => ({ ...p, endDate: e.target.value }))}
+            className="input-field w-auto text-xs h-9" />
+          <button onClick={() => { setFilters({ type: "", startDate: "", endDate: "" }); setSearchTerm(""); }}
+            className="btn-ghost text-xs h-9 px-3">
+            Clear
           </button>
         </div>
       </div>
 
-      {error && <div className="error-message">{error}</div>}
+      {error && (
+        <div className="mx-5 mt-4 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-red-400 text-sm">{error}</div>
+      )}
 
-      {filteredOrders.length === 0 ? (
-        <p className="no-orders">
-          {searchTerm ? "No orders match your search" : "No orders found"}
-        </p>
+      {loading && orders.length === 0 ? (
+        <div className="flex items-center justify-center py-16">
+          <div className="w-8 h-8 border-2 border-brand-500/30 border-t-brand-500 rounded-full animate-spin"></div>
+        </div>
+      ) : filteredOrders.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 gap-2 text-slate-600">
+          <span className="text-3xl">📭</span>
+          <p className="text-sm">{searchTerm ? "No matching orders" : "No orders found"}</p>
+        </div>
       ) : (
-        <div className="table-responsive">
-          <table className="orders-table">
+        <div className="overflow-x-auto">
+          <table className="data-table">
             <thead>
               <tr>
-                <th></th>
+                <th className="w-8"></th>
                 <th>Date</th>
-                <th>Customer Name</th>
+                <th>Customer</th>
                 <th>Phone</th>
                 <th>Type</th>
                 <th>Items</th>
                 <th>Total KG</th>
-                <th>Actions</th>
+                <th className="w-12"></th>
               </tr>
             </thead>
             <tbody>
               {filteredOrders.map(order => (
                 <React.Fragment key={order._id}>
-                  <tr>
+                  <tr className={expandedOrder === order._id ? "bg-brand-600/5" : ""}>
                     <td>
-                      <button 
-                        onClick={() => toggleExpand(order._id)}
-                        className="expand-btn"
-                      >
-                        {expandedOrder === order._id ? '▼' : '▶'}
+                      <button onClick={() => setExpandedOrder(expandedOrder === order._id ? null : order._id)}
+                        className="text-slate-600 hover:text-brand-400 transition-colors text-xs">
+                        {expandedOrder === order._id ? "▼" : "▶"}
                       </button>
                     </td>
-                    <td>{new Date(order.orderDate).toLocaleDateString()}</td>
-                    <td>{order.customerName}</td>
-                    <td>{order.phoneNumber || '-'}</td>
+                    <td className="font-mono text-xs text-slate-400">
+                      {new Date(order.orderDate).toLocaleDateString()}
+                    </td>
+                    <td className="font-medium text-slate-200">{order.customerName}</td>
+                    <td className="font-mono text-xs text-slate-400">{order.phoneNumber || "—"}</td>
                     <td>
-                      <span className={`type-badge ${getTypeClass(order.type)}`}>
+                      <span className={`badge border ${TYPE_BADGE[order.type] || "bg-slate-600/20 text-slate-400 border-slate-500/30"}`}>
                         {order.type}
                       </span>
                     </td>
-                    <td>
-                      {order.items && order.items.length > 0 ? (
-                        <span className="items-count">
-                          {order.items.length} item{order.items.length > 1 ? 's' : ''}
-                        </span>
-                      ) : (
-                        <span className="no-items">No items</span>
-                      )}
+                    <td className="text-slate-400 text-xs">
+                      {order.items?.length > 0 ? `${order.items.length} item${order.items.length > 1 ? "s" : ""}` : "—"}
                     </td>
-                    <td className="total-kg">{calculateTotalKg(order.items)} kg</td>
+                    <td className="font-mono text-xs text-emerald-400 font-semibold">
+                      {calcKg(order.items)} kg
+                    </td>
                     <td>
-                      <button
-                        onClick={() => handleDelete(order._id)}
-                        className="delete-btn"
-                        title="Delete order"
-                      >
+                      <button onClick={() => handleDelete(order._id)}
+                        className="text-slate-600 hover:text-red-400 transition-colors p-1 rounded">
                         🗑️
                       </button>
                     </td>
                   </tr>
-                  
-                  {expandedOrder === order._id && order.items && order.items.length > 0 && (
-                    <tr className="items-detail-row">
-                      <td colSpan="8">
-                        <div className="items-detail">
-                          <h4>Order Items:</h4>
-                          <table className="items-detail-table">
+
+                  {expandedOrder === order._id && order.items?.length > 0 && (
+                    <tr>
+                      <td colSpan="8" className="bg-surface-900 px-10 py-3">
+                        <div className="rounded-xl border border-white/5 overflow-hidden">
+                          <table className="data-table text-xs">
                             <thead>
                               <tr>
                                 <th>Item Name</th>
-                                <th>Quantity (kg)</th>
+                                <th>Quantity</th>
                               </tr>
                             </thead>
                             <tbody>
                               {order.items.map((item, idx) => (
                                 <tr key={idx}>
                                   <td>{item.itemName}</td>
-                                  <td>{item.quantity} kg</td>
+                                  <td className="font-mono text-emerald-400">{item.quantity} kg</td>
                                 </tr>
                               ))}
                             </tbody>
