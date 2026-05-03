@@ -9,7 +9,7 @@ import Users from "./pages/Users";
 import Settings from "./pages/Settings";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
-
+import GrowthComparison from "./pages/GrowthComparison";
 function App() {
   return (
     <ThemeProvider>
@@ -37,6 +37,9 @@ function App() {
             <Route path="/settings" element={
               <ProtectedRoute><Settings /></ProtectedRoute>
             } />
+            <Route path="/growth" element={
+  <AdminRoute><GrowthComparison /></AdminRoute>
+} />
           </Routes>
         </Layout>
       </Router>
