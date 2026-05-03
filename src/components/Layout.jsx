@@ -26,12 +26,19 @@ export function ThemeProvider({ children }) {
 
 export const useTheme = () => useContext(ThemeContext);
 
-// ─── Nav items ────────────────────────────────────────────────────────────────
-const STAFF_NAV = [
+// ─── Role helpers ─────────────────────────────────────────────────────────────
+export const hasRole = (user, role) => user?.roles?.includes(role);
+export const isAdmin    = (user) => hasRole(user, "admin");
+export const isStaffPlus = (user) => hasRole(user, "staff") || hasRole(user, "admin");
+export const isAnyStaff  = (user) => hasRole(user, "user") || hasRole(user, "staff") || hasRole(user, "admin");
+
+// ─── All nav items with role guards ──────────────────────────────────────────
+const NAV_ITEMS = [
   {
     to: "/",
     end: true,
     label: "Dashboard",
+    roles: ["user", "staff", "admin"], // everyone
     icon: (
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
@@ -39,44 +46,46 @@ const STAFF_NAV = [
       </svg>
     ),
   },
-];
-
-const ADMIN_NAV = [
   {
     to: "/admin",
     end: true,
     label: "Admin Panel",
+    roles: ["staff", "admin"],
+    badge: "ADMIN",
+    badgeColor: "#ef4444",
     icon: (
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
       </svg>
     ),
-    adminOnly: true,
   },
-  {
-  to: "/growth",
-  label: "Growth",
-  icon: (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
-      <polyline points="17 6 23 6 23 12"/>
-    </svg>
-  ),
-  adminOnly: true,
-},
   {
     to: "/analytics",
     label: "Analytics",
+    roles: ["staff", "admin"],
     icon: (
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
       </svg>
     ),
-    adminOnly: true,
+  },
+  {
+    to: "/growth",
+    label: "Growth",
+    roles: ["staff", "admin"],
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+        <polyline points="17 6 23 6 23 12"/>
+      </svg>
+    ),
   },
   {
     to: "/users",
     label: "Users",
+    roles: ["admin"], // admin only
+    badge: "ADMIN",
+    badgeColor: "#ef4444",
     icon: (
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
@@ -85,11 +94,11 @@ const ADMIN_NAV = [
         <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
       </svg>
     ),
-    adminOnly: true,
   },
   {
     to: "/settings",
     label: "Settings",
+    roles: ["user", "staff", "admin"], // everyone
     icon: (
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="3"/>
@@ -99,7 +108,20 @@ const ADMIN_NAV = [
   },
 ];
 
-// ─── Single nav link ──────────────────────────────────────────────────────────
+// ─── Role label & color ───────────────────────────────────────────────────────
+const ROLE_DISPLAY = {
+  admin: { label: "Administrator", icon: "🛡️", bg: "rgba(239,68,68,0.1)",    border: "rgba(239,68,68,0.25)",    text: "#f87171" },
+  staff: { label: "Staff+",        icon: "📋", bg: "rgba(139,92,246,0.1)",   border: "rgba(139,92,246,0.25)",   text: "#a78bfa" },
+  user:  { label: "Staff",         icon: "👤", bg: "rgba(59,130,246,0.1)",   border: "rgba(59,130,246,0.25)",   text: "#60a5fa" },
+};
+
+function getRoleDisplay(user) {
+  if (isAdmin(user))     return ROLE_DISPLAY.admin;
+  if (isStaffPlus(user)) return ROLE_DISPLAY.staff;
+  return ROLE_DISPLAY.user;
+}
+
+// ─── Single nav item ──────────────────────────────────────────────────────────
 function NavItem({ item, collapsed, isDark, onClick }) {
   return (
     <NavLink
@@ -120,13 +142,18 @@ function NavItem({ item, collapsed, isDark, onClick }) {
       `}
     >
       <span className="shrink-0">{item.icon}</span>
-      {!collapsed && <span>{item.label}</span>}
-      {item.adminOnly && !collapsed && (
-        <span className="ml-auto text-xs px-1.5 py-0.5 rounded-md"
-              style={{ background: "rgba(239,68,68,0.15)", color: "#f87171", fontSize: "9px", fontWeight: 700 }}>
-          ADMIN
+
+      {!collapsed && <span className="flex-1">{item.label}</span>}
+
+      {/* Role badge on item */}
+      {!collapsed && item.badge && (
+        <span className="text-xs px-1.5 py-0.5 rounded font-bold"
+              style={{ background: `${item.badgeColor}20`, color: item.badgeColor, fontSize: "9px" }}>
+          {item.badge}
         </span>
       )}
+
+      {/* Tooltip when collapsed */}
       {collapsed && (
         <div className={`
           absolute left-full ml-2 px-2 py-1 rounded-lg text-xs font-medium whitespace-nowrap
@@ -144,21 +171,26 @@ function NavItem({ item, collapsed, isDark, onClick }) {
 function Sidebar({ collapsed, onClose }) {
   const { user, logout } = useAuth();
   const { isDark, toggle } = useTheme();
-  const isAdmin = user?.roles?.includes("admin");
+  const roleDisplay = getRoleDisplay(user);
 
-  const allNav = [...STAFF_NAV, ...ADMIN_NAV];
-  const visibleNav = allNav.filter(item => isAdmin || !item.adminOnly);
+  // Filter nav items by user role
+  const visibleItems = NAV_ITEMS.filter(item =>
+    item.roles.some(r => user?.roles?.includes(r))
+  );
+
+  // Split into sections
+  const workspaceItems = visibleItems.filter(i => ["/", "/settings"].includes(i.to));
+  const mgmtItems      = visibleItems.filter(i => !["/", "/settings"].includes(i.to));
 
   return (
     <>
+      {/* Mobile overlay */}
       {!collapsed && (
-        <div className="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm lg:hidden"
-             onClick={onClose} />
+        <div className="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm lg:hidden" onClick={onClose} />
       )}
 
       <aside className={`
-        fixed top-0 left-0 z-40 h-full flex flex-col
-        transition-all duration-300 ease-in-out
+        fixed top-0 left-0 z-40 h-full flex flex-col transition-all duration-300 ease-in-out
         ${collapsed ? "-translate-x-full lg:translate-x-0 lg:w-16" : "translate-x-0 w-64"}
         ${isDark ? "bg-[#0c1525] border-r border-white/5" : "bg-white border-r border-slate-200"}
       `}>
@@ -177,7 +209,7 @@ function Sidebar({ collapsed, onClose }) {
               <p className={`text-sm font-bold leading-none ${isDark ? "text-white" : "text-slate-800"}`}
                  style={{ fontFamily: "Syne, sans-serif" }}>Diyaar OMS</p>
               <p className={`text-xs mt-0.5 ${isDark ? "text-slate-500" : "text-slate-400"}`}>
-                {isAdmin ? "Admin Panel" : "Staff Panel"}
+                {roleDisplay.label}
               </p>
             </div>
           )}
@@ -186,37 +218,35 @@ function Sidebar({ collapsed, onClose }) {
         {/* Role badge */}
         {!collapsed && (
           <div className="px-3 pt-3">
-            <div className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium
-              ${isAdmin
-                ? "bg-red-500/10 border border-red-500/20 text-red-400"
-                : "bg-blue-500/10 border border-blue-500/20 text-blue-400"}`}>
-              <span>{isAdmin ? "🛡️" : "👤"}</span>
-              <span>{isAdmin ? "Administrator" : "Staff Member"}</span>
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium"
+                 style={{ background: roleDisplay.bg, border: `1px solid ${roleDisplay.border}`, color: roleDisplay.text }}>
+              <span>{roleDisplay.icon}</span>
+              <span>{roleDisplay.label}</span>
             </div>
           </div>
         )}
 
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-1">
-          {/* Staff section */}
+          {/* Workspace section — always visible */}
           {!collapsed && (
             <p className={`text-xs font-semibold uppercase tracking-wider px-3 py-1 ${isDark ? "text-slate-600" : "text-slate-400"}`}>
               Workspace
             </p>
           )}
-          {STAFF_NAV.map(item => (
+          {workspaceItems.map(item => (
             <NavItem key={item.to} item={item} collapsed={collapsed} isDark={isDark} onClick={onClose} />
           ))}
 
-          {/* Admin section — only visible to admins */}
-          {isAdmin && (
+          {/* Management section — staff+ and admin only */}
+          {mgmtItems.length > 0 && (
             <>
               {!collapsed && (
                 <p className={`text-xs font-semibold uppercase tracking-wider px-3 py-1 mt-3 ${isDark ? "text-slate-600" : "text-slate-400"}`}>
-                  Administration
+                  Management
                 </p>
               )}
-              {ADMIN_NAV.map(item => (
+              {mgmtItems.map(item => (
                 <NavItem key={item.to} item={item} collapsed={collapsed} isDark={isDark} onClick={onClose} />
               ))}
             </>
@@ -224,21 +254,18 @@ function Sidebar({ collapsed, onClose }) {
         </nav>
 
         {/* Bottom */}
-        <div className={`p-3 border-t space-y-1 shrink-0
-          ${isDark ? "border-white/5" : "border-slate-200"}`}>
-
+        <div className={`p-3 border-t space-y-1 shrink-0 ${isDark ? "border-white/5" : "border-slate-200"}`}>
           {/* Theme toggle */}
           <button onClick={toggle}
             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all
               ${isDark ? "text-slate-400 hover:text-slate-200 hover:bg-white/5" : "text-slate-500 hover:text-slate-700 hover:bg-slate-100"}`}>
-            <span className="shrink-0 text-base">{isDark ? "☀️" : "🌙"}</span>
+            <span className="shrink-0">{isDark ? "☀️" : "🌙"}</span>
             {!collapsed && <span>{isDark ? "Light Mode" : "Dark Mode"}</span>}
           </button>
 
           {/* User info */}
           {!collapsed && (
-            <div className={`flex items-center gap-3 px-3 py-2.5 rounded-xl
-              ${isDark ? "bg-white/3" : "bg-slate-50"}`}>
+            <div className={`flex items-center gap-3 px-3 py-2.5 rounded-xl ${isDark ? "bg-white/3" : "bg-slate-50"}`}>
               <div className="w-7 h-7 rounded-full bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 text-xs font-bold shrink-0">
                 {(user?.name || user?.email || "U")[0].toUpperCase()}
               </div>
@@ -246,8 +273,8 @@ function Sidebar({ collapsed, onClose }) {
                 <p className={`text-xs font-medium truncate ${isDark ? "text-slate-200" : "text-slate-700"}`}>
                   {user?.name || user?.email}
                 </p>
-                <p className={`text-xs truncate ${isDark ? "text-slate-500" : "text-slate-400"}`}>
-                  {user?.roles?.[0] || "user"}
+                <p className={`text-xs truncate`} style={{ color: roleDisplay.text }}>
+                  {roleDisplay.icon} {roleDisplay.label}
                 </p>
               </div>
             </div>
@@ -279,8 +306,7 @@ export default function Layout({ children }) {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
 
-  const allNav = [...STAFF_NAV, ...ADMIN_NAV];
-  const currentPage = allNav.find(i =>
+  const currentPage = NAV_ITEMS.find(i =>
     i.end ? location.pathname === i.to : location.pathname.startsWith(i.to)
   );
 
@@ -325,7 +351,7 @@ export default function Layout({ children }) {
 
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               <span className={`text-xs ${isDark ? "text-slate-500" : "text-slate-400"}`}>Live</span>
             </div>
           </div>
